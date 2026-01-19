@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Showcase
+
+A website to showcase animations and UI designs by Divyanshu Yadav, built with Next.js.
 
 ## Getting Started
 

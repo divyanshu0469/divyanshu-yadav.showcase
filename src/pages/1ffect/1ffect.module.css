@@ -1,0 +1,15 @@
+.container {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  /* align-items: flex-end; */
+  background-color: black;
+  height: 100vh;
+}
+
+.redLines {
+  z-index: 0;
+  position: absolute;
+  width: 160%;
+  height: 100%;
+}

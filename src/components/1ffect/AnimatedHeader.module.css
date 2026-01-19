@@ -1,0 +1,75 @@
+.header {
+  display: flex;
+  z-index: 1;
+  width: 100%;
+  gap: 0.5rem;
+  height: 100%;
+  padding: 1rem;
+  text-transform: uppercase;
+  color: #e82634;
+}
+
+.innerContainer {
+  padding-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.smallText {
+  font-size: 1.875rem;
+  font-weight: 800;
+}
+
+.smallText::selection {
+  background-color: #e82634;
+  color: black;
+}
+
+.largeText {
+  font-size: 10rem;
+  line-height: 10rem;
+  font-family: "Anton", sans-serif;
+}
+
+.largeText::selection {
+  background-color: #e82634;
+  color: black;
+}
+
+/* Responsive styles */
+@media (max-width: 1280px) {
+  .largeText {
+    font-size: 8rem;
+    line-height: 8rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .smallText {
+    font-size: 1.5rem;
+  }
+  .largeText {
+    font-size: 6rem;
+    line-height: 6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .smallText {
+    font-size: 1.25rem;
+  }
+  .largeText {
+    font-size: 4.5rem;
+    line-height: 4.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .smallText {
+    font-size: 1.125rem;
+  }
+  .largeText {
+    font-size: 3rem;
+    line-height: 3rem;
+  }
+}
