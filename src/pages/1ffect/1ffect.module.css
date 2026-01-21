@@ -2,8 +2,7 @@
   position: relative;
   overflow: hidden;
   display: flex;
-  /* align-items: flex-end; */
-  background-color: black;
+  background-color: var(--background);
   height: 100vh;
 }
 

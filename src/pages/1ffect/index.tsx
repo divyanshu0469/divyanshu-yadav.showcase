@@ -8,7 +8,10 @@ export default function Effect1() {
     <div className={styles.container}>
       <AnimatedRedLines className={styles.redLines} />
       <AnimatedHeader />
-      <ToolBar position={{ bottom: "2rem", right: "2rem" }} />
+      <ToolBar
+        foreground="var(--foreground)"
+        position={{ bottom: "2rem", right: "2rem" }}
+      />
     </div>
   );
 }

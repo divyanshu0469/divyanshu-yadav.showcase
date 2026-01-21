@@ -1,6 +1,19 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { CustomEase } from "gsap/CustomEase";
 import styles from "./ToolBar.module.css";
+
+// Register the plugin
+gsap.registerPlugin(CustomEase);
+
+// Create spring easing with overshoot and settle
+// This curve overshoots to ~1.1, then settles back to 1
+CustomEase.create(
+  "spring",
+  "M0,0 C0.2,0 0.3,1.2 0.5,1.1 0.7,1.05 0.85,0.98 1,1"
+);
+import AnimatedHeader from "../1ffect/AnimatedHeader";
+import AnimatedText from "../1ffect/AnimatedText";
 
 type ToolBarProps = {
   position: {
@@ -17,8 +30,8 @@ type ToolBarProps = {
 const ToolBar = ({
   position,
   strokeWidth = 2,
-  foreground = "red",
-  background = "black",
+  foreground = "var(--foreground)",
+  background = "var(--background)",
 }: ToolBarProps) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -40,13 +53,8 @@ const ToolBar = ({
     gsap.set(buttonBackgroundRef.current, {
       rotateX: 90,
     });
-    gsap.set(box1Ref.current, {
-      borderTopColor: foreground,
-      borderRightColor: foreground,
-    });
-    gsap.set(box2Ref.current, {
-      borderBottomColor: foreground,
-      borderLeftColor: foreground,
+    gsap.set(menuRef.current, {
+      rotateX: 90,
     });
   }, []);
 
@@ -91,19 +99,12 @@ const ToolBar = ({
       gsap.to(buttonBackgroundRef.current, {
         rotateX: 0,
         duration: 0.3,
-        ease: "cubic-bezier(0.83, 0, 0.17, 1);",
+        ease: "cubic-bezier(0.83, 0, 0.17, 1)",
       });
-      gsap.to(box1Ref.current, {
-        borderTopColor: background,
-        borderRightColor: background,
-        duration: 0.3,
-        ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-      });
-      gsap.to(box2Ref.current, {
-        borderBottomColor: background,
-        borderLeftColor: background,
-        duration: 0.3,
-        ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+      gsap.to(menuRef.current, {
+        rotateX: 0,
+        duration: 0.4,
+        ease: "cubic-bezier(0.83, 0, 0.17, 1)",
       });
     } else {
       gsap.to(boxWrapper1Ref.current, {
@@ -121,18 +122,12 @@ const ToolBar = ({
       gsap.to(buttonBackgroundRef.current, {
         rotateX: 90,
         duration: 0.3,
-        ease: "cubic-bezier(0.83, 0, 0.17, 1);",
-      });
-      gsap.to(box1Ref.current, {
-        borderTopColor: foreground,
-        borderRightColor: foreground,
-        duration: 0.3,
+        delay: 0.2,
         ease: "cubic-bezier(0.22, 1, 0.36, 1)",
       });
-      gsap.to(box2Ref.current, {
-        borderBottomColor: foreground,
-        borderLeftColor: foreground,
-        duration: 0.3,
+      gsap.to(menuRef.current, {
+        rotateX: 90,
+        duration: 0.4,
         ease: "cubic-bezier(0.22, 1, 0.36, 1)",
       });
     }
@@ -204,42 +199,56 @@ const ToolBar = ({
         top: position.top,
         right: position.right,
         bottom: position.bottom,
+        backgroundColor: background,
       }}
       onMouseEnter={open ? undefined : handleMouseEnter}
       onMouseLeave={open ? undefined : handleMouseLeave}
-      onClick={handleClick}
     >
-      {/* <div
+      <div
         ref={menuRef}
         style={{
           bottom: 0,
           right: 0,
           zIndex: 0,
+          height: "400%",
           position: "absolute",
           borderRadius: "2px",
-          backgroundColor: foreground,
-          transformOrigin: "bottom center",
+          color: "var(--accent)",
+          backgroundColor: "#d70000",
+          paddingLeft: "1rem",
+          transformOrigin: "bottom",
         }}
         className={styles.box}
-      ></div> */}
+      >
+        <div
+          className={styles.box}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "start",
+          }}
+        ></div>
+      </div>
       <div
         ref={buttonBackgroundRef}
         style={{
           zIndex: 0,
           position: "absolute",
           borderRadius: "2px",
-          backgroundColor: foreground,
-          transformOrigin: "bottom center",
+          backgroundColor: "var(--accent)",
+          transformOrigin: "bottom",
         }}
         className={styles.box}
       ></div>
+
       <div style={{ justifyContent: "end" }} className={styles.container}>
         <div ref={boxWrapper1Ref} className={styles.boxWrapper}>
           <div
             ref={box1Ref}
             style={{
-              borderTop: `${strokeWidth}px solid`,
-              borderRight: `${strokeWidth}px solid`,
+              borderTop: `${strokeWidth}px solid ${foreground}`,
+              borderRight: `${strokeWidth}px solid ${foreground}`,
+              mixBlendMode: "multiply",
             }}
             className={styles.box}
           ></div>
@@ -250,13 +259,26 @@ const ToolBar = ({
           <div
             ref={box2Ref}
             style={{
-              borderBottom: `${strokeWidth}px solid`,
-              borderLeft: `${strokeWidth}px solid`,
+              borderBottom: `${strokeWidth}px solid ${foreground}`,
+              borderLeft: `${strokeWidth}px solid ${foreground}`,
+              mixBlendMode: "multiply",
             }}
             className={styles.box}
           ></div>
         </div>
       </div>
+      <div
+        onClick={handleClick}
+        className={styles.box}
+        style={{
+          position: "absolute",
+          zIndex: 1,
+          cursor: "pointer",
+          display: "flex",
+          flexDirection: "row",
+          overflow: "hidden",
+        }}
+      ></div>
     </button>
   );
 };
