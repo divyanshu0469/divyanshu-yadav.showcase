@@ -1,0 +1,35 @@
+.clipSvg {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--foreground);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: url(#preloader-clip);
+}
+
+.numberWrapper {
+  overflow: hidden;
+  height: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.number {
+  font-family: "Anton", sans-serif;
+  font-size: 8rem;
+  color: var(--background);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}

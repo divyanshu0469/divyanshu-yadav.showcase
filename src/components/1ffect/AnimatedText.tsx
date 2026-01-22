@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 
@@ -52,7 +52,7 @@ const AnimatedText = ({
   const textRef = useRef<HTMLParagraphElement>(null);
   const splitRef = useRef<SplitText | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!textRef.current) return;
 
     if (!splitRef.current) {
@@ -66,6 +66,35 @@ const AnimatedText = ({
       }
 
       splitRef.current = SplitText.create(textRef.current, config);
+
+      // Set initial state based on openAnimation
+      if (openAnimation && splitRef.current) {
+        const initialState: any = {};
+        if (openAnimation.x !== undefined) initialState.x = openAnimation.x;
+        if (openAnimation.y !== undefined) initialState.y = openAnimation.y;
+        if (openAnimation.yPercent !== undefined)
+          initialState.yPercent = openAnimation.yPercent;
+        if (openAnimation.xPercent !== undefined)
+          initialState.xPercent = openAnimation.xPercent;
+        if (openAnimation.opacity !== undefined)
+          initialState.opacity = openAnimation.opacity;
+        if (openAnimation.scale !== undefined)
+          initialState.scale = openAnimation.scale;
+        if (openAnimation.rotate !== undefined)
+          initialState.rotate = openAnimation.rotate;
+        if (openAnimation.rotateX !== undefined)
+          initialState.rotateX = openAnimation.rotateX;
+        if (openAnimation.rotateY !== undefined)
+          initialState.rotateY = openAnimation.rotateY;
+        if (openAnimation.rotateZ !== undefined)
+          initialState.rotateZ = openAnimation.rotateZ;
+        if (openAnimation.skewX !== undefined)
+          initialState.skewX = openAnimation.skewX;
+        if (openAnimation.skewY !== undefined)
+          initialState.skewY = openAnimation.skewY;
+
+        gsap.set(splitRef.current.lines, initialState);
+      }
     }
 
     return () => {
@@ -74,7 +103,7 @@ const AnimatedText = ({
         splitRef.current = null;
       }
     };
-  }, [noMask]);
+  }, [noMask, openAnimation]);
 
   useEffect(() => {
     if (animationState === undefined || !splitRef.current) return;

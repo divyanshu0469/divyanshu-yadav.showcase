@@ -10,7 +10,7 @@ gsap.registerPlugin(CustomEase);
 // This curve overshoots to ~1.1, then settles back to 1
 CustomEase.create(
   "spring",
-  "M0,0 C0.2,0 0.3,1.2 0.5,1.1 0.7,1.05 0.85,0.98 1,1"
+  "M0,0 C0.2,0 0.3,1.2 0.5,1.1 0.7,1.05 0.85,0.98 1,1",
 );
 import AnimatedHeader from "../1ffect/AnimatedHeader";
 import AnimatedText from "../1ffect/AnimatedText";
@@ -210,24 +210,59 @@ const ToolBar = ({
           bottom: 0,
           right: 0,
           zIndex: 0,
-          height: "400%",
+          height: "fit-content",
           position: "absolute",
           borderRadius: "2px",
           color: "var(--accent)",
-          backgroundColor: "#d70000",
-          paddingLeft: "1rem",
+          backgroundColor: "var(--foreground)",
           transformOrigin: "bottom",
         }}
         className={styles.box}
       >
         <div
-          className={styles.box}
           style={{
+            width: "100%",
+            height: "fit-content",
             display: "flex",
             flexDirection: "column",
             alignItems: "start",
           }}
-        ></div>
+        >
+          <div
+            style={{
+              fontFamily: "Inter",
+              fontWeight: 200,
+              fontSize: "3.5rem",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            ?
+          </div>
+          <div
+            style={{
+              fontFamily: "Inter",
+              fontWeight: 200,
+              fontSize: "3.5rem",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            {`<`}
+          </div>
+          <div
+            style={{
+              fontFamily: "Inter",
+              fontWeight: 200,
+              fontSize: "3.5rem",
+              width: "100%",
+              height: "100%",
+              color: "transparent",
+            }}
+          >
+            X
+          </div>
+        </div>
       </div>
       <div
         ref={buttonBackgroundRef}
