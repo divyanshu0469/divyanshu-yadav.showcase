@@ -27,7 +27,7 @@
 }
 
 .number {
-  font-family: "Anton", sans-serif;
+  font-family: var(--font-anton), sans-serif;
   font-size: 8rem;
   color: var(--background);
   line-height: 1;

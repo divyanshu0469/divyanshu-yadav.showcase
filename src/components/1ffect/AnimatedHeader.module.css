@@ -17,7 +17,7 @@
 
 .smallText {
   font-size: 1.875rem;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 700;
 }
 
@@ -29,7 +29,7 @@
 .largeText {
   font-size: 10rem;
   line-height: 10rem;
-  font-family: "Anton", sans-serif;
+  font-family: var(--font-anton), sans-serif;
 }
 
 .largeText::selection {
