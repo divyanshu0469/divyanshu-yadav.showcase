@@ -1,13 +1,8 @@
-.clipSvg {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-
 .preloader {
   position: fixed;
-  top: 0;
+  top: 50%;
   left: 0;
+  transform: translateY(-50%);
   width: 100vw;
   height: 100vh;
   background-color: var(--foreground);
@@ -15,7 +10,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  clip-path: url(#preloader-clip);
 }
 
 .numberWrapper {

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
 import gsap from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import styles from "./ToolBar.module.css";
@@ -12,8 +13,6 @@ CustomEase.create(
   "spring",
   "M0,0 C0.2,0 0.3,1.2 0.5,1.1 0.7,1.05 0.85,0.98 1,1",
 );
-import AnimatedHeader from "../1ffect/AnimatedHeader";
-import AnimatedText from "../1ffect/AnimatedText";
 
 type ToolBarProps = {
   position: {
@@ -25,6 +24,7 @@ type ToolBarProps = {
   strokeWidth?: number;
   foreground?: string;
   background?: string;
+  onHelpToggle?: () => void;
 };
 
 const ToolBar = ({
@@ -32,7 +32,9 @@ const ToolBar = ({
   strokeWidth = 2,
   foreground = "var(--foreground)",
   background = "var(--background)",
+  onHelpToggle,
 }: ToolBarProps) => {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonBackgroundRef = useRef<HTMLDivElement>(null);
@@ -229,23 +231,33 @@ const ToolBar = ({
           }}
         >
           <div
+            onClick={(e) => {
+              e.stopPropagation();
+              onHelpToggle?.();
+            }}
             style={{
               fontFamily: "Inter",
               fontWeight: 200,
               fontSize: "3.5rem",
               width: "100%",
               height: "100%",
+              cursor: "pointer",
             }}
           >
             ?
           </div>
           <div
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push("/");
+            }}
             style={{
               fontFamily: "Inter",
               fontWeight: 200,
               fontSize: "3.5rem",
               width: "100%",
               height: "100%",
+              cursor: "pointer",
             }}
           >
             {`<`}
