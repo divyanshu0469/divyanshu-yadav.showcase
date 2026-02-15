@@ -1,7 +1,39 @@
 :root {
+  /* Legacy color variables (for backward compatibility) */
   --background: #000;
   --foreground: #d92330;
   --accent: #f3f0f0;
+
+  /* Fallback values for page themes */
+  --color-bg: #000;
+  --color-fg: #d92330;
+  --color-accent: #f3f0f0;
+
+  /* Typography fallbacks */
+  --typo-display-large: 10rem;
+  --typo-display-medium: 8rem;
+  --typo-heading-large: 1.875rem;
+  --typo-heading-medium: 1.5rem;
+  --typo-body-large: 1.25rem;
+  --typo-body-base: 1rem;
+  --typo-body-small: 0.875rem;
+
+  /* Spacing fallbacks */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-xxl: 4rem;
+
+  /* Sizing fallbacks */
+  --sizing-container-padding: 1rem;
+  --sizing-header-gap: 0.5rem;
+  --sizing-number-wrapper-height: 8rem;
+
+  /* COMMON component tokens (fixed across all pages) */
+  --common-toolbar-button-size: 4rem;
+  --common-toolbar-icon-size: 1.5rem;
 }
 
 html,

@@ -295,7 +295,6 @@ const ToolBar = ({
             style={{
               borderTop: `${strokeWidth}px solid ${foreground}`,
               borderRight: `${strokeWidth}px solid ${foreground}`,
-              mixBlendMode: "multiply",
             }}
             className={styles.box}
           ></div>
@@ -308,7 +307,6 @@ const ToolBar = ({
             style={{
               borderBottom: `${strokeWidth}px solid ${foreground}`,
               borderLeft: `${strokeWidth}px solid ${foreground}`,
-              mixBlendMode: "multiply",
             }}
             className={styles.box}
           ></div>

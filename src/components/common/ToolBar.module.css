@@ -1,9 +1,10 @@
 .button {
-  z-index: 1;
+  z-index: 10;
   background-color: transparent;
+  mix-blend-mode: difference;
   position: absolute;
-  width: 4rem;
-  height: 4rem;
+  width: var(--common-toolbar-button-size);
+  height: var(--common-toolbar-button-size);
   display: flex;
   flex-direction: row;
   border: none;
@@ -26,5 +27,5 @@
 }
 
 .text {
-  color: var(--background);
+  color: var(--color-bg);
 }

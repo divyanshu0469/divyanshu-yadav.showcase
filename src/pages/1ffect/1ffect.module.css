@@ -1,9 +1,34 @@
-.container {
+.page {
   position: relative;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-bg);
+}
+
+.heroWrapper {
+  position: relative;
+  height: 100%;
+  background-color: #c6c6c6;
+}
+
+.heroSection {
   overflow: hidden;
   display: flex;
-  background-color: var(--background);
-  height: 100vh;
+  background-color: var(--color-bg);
+  height: 100%;
+  will-change: transform;
+  transform-origin: center bottom;
+}
+
+.particleWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  overflow: hidden;
+  will-change: transform;
 }
 
 .redLines {
