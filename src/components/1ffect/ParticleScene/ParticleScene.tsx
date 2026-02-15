@@ -41,7 +41,10 @@ function createGrainTexture(): string {
   return canvas.toDataURL();
 }
 
-const ParticleScene = ({ models: modelConfigs, handleRef }: ParticleSceneProps) => {
+const ParticleScene = ({
+  models: modelConfigs,
+  handleRef,
+}: ParticleSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const grainRef = useRef<HTMLDivElement>(null);
@@ -54,14 +57,20 @@ const ParticleScene = ({ models: modelConfigs, handleRef }: ParticleSceneProps) 
     const grainEl = grainRef.current;
     if (!container || !canvas || !grainEl) return;
 
+    // Lightweight grain: generate once, animate with CSS
+    grainEl.style.backgroundImage = `url(${createGrainTexture()})`;
+
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (isMobile) {
+      canvas.style.display = "none";
+      return;
+    }
+
     let cleanup: (() => void) | undefined;
 
     const initScene = async () => {
       if (isInitializedRef.current) return;
       isInitializedRef.current = true;
-
-      // Lightweight grain: generate once, animate with CSS
-      grainEl.style.backgroundImage = `url(${createGrainTexture()})`;
 
       const THREE = await import("three");
       const { ParticleModel } = await import("./ParticleModel");
@@ -83,7 +92,7 @@ const ParticleScene = ({ models: modelConfigs, handleRef }: ParticleSceneProps) 
         0.1,
         100,
       );
-      camera.position.set(3, 0, 1);
+      camera.position.set(4, 0, 0);
       camera.lookAt(0, 0, 0);
 
       const clock = new THREE.Clock();
@@ -96,8 +105,7 @@ const ParticleScene = ({ models: modelConfigs, handleRef }: ParticleSceneProps) 
       };
 
       const modelInstances = modelConfigs.map(
-        (config) =>
-          new ParticleModel({ ...config, scene }, handleBgChange),
+        (config) => new ParticleModel({ ...config, scene }, handleBgChange),
       );
 
       let activeIndex = 0;
@@ -109,9 +117,10 @@ const ParticleScene = ({ models: modelConfigs, handleRef }: ParticleSceneProps) 
       };
       toggleRef.current = handleClick;
       if (handleRef) {
-        (handleRef as React.MutableRefObject<ParticleSceneHandle | null>).current = { toggleModel: handleClick };
+        (
+          handleRef as React.MutableRefObject<ParticleSceneHandle | null>
+        ).current = { toggleModel: handleClick };
       }
-
 
       const handleMouseMove = (e: MouseEvent) => {
         const r = canvas.getBoundingClientRect();

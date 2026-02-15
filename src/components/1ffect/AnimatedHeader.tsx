@@ -11,7 +11,7 @@ const AnimatedHeader = ({ startAnimation = true }: AnimatedHeaderProps) => {
     <div className={styles.header}>
       <div className={styles.innerContainer}>
         <AnimatedText
-          label="this is the moment"
+          label="not just a ride"
           duration={1.5}
           shadow
           animationState={startAnimation}
@@ -19,7 +19,7 @@ const AnimatedHeader = ({ startAnimation = true }: AnimatedHeaderProps) => {
           className={styles.smallText}
         />
         <AnimatedText
-          label="Let's make it"
+          label="this machine is a"
           delay={0.7}
           duration={1.5}
           shadow
@@ -28,7 +28,7 @@ const AnimatedHeader = ({ startAnimation = true }: AnimatedHeaderProps) => {
           className={styles.largeText}
         />
         <AnimatedText
-          label="happen"
+          label="statement"
           delay={0.7}
           duration={1.5}
           shadow

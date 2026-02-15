@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import gsap from "gsap";
 import AnimatedRedLines from "@/components/1ffect/AnimatedRedLines";
 import AnimatedHeader from "@/components/1ffect/AnimatedHeader";
+import AnimatedText from "@/components/1ffect/AnimatedText";
 import Preloader from "@/components/1ffect/Preloader";
 import styles from "./1ffect.module.css";
 import ToolBar from "@/components/common/ToolBar";
@@ -105,9 +106,13 @@ const CursorFollower = ({
   );
 };
 
+const OPEN_ANIM_DOWN = { yPercent: -100 };
+
 const Effect1: NextPageWithLayout = () => {
   const [animationsStarted, setAnimationsStarted] = useState(false);
   const [helpMode, setHelpMode] = useState(false);
+  const [particleTextVisible, setParticleTextVisible] = useState(false);
+  const [activeModelIndex, setActiveModelIndex] = useState(0);
   const cursorPosition = useRef({ x: 0, y: 0 });
   const pageRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -123,6 +128,11 @@ const Effect1: NextPageWithLayout = () => {
   const knobRef = useRef<HTMLDivElement>(null);
   const toggleStateRef = useRef(0);
   const toggleLockRef = useRef(false);
+  const isMobileRef = useRef(false);
+
+  useEffect(() => {
+    isMobileRef.current = window.matchMedia("(max-width: 768px)").matches;
+  }, []);
 
   useLayoutEffect(() => {
     if (particleRef.current) {
@@ -199,69 +209,118 @@ const Effect1: NextPageWithLayout = () => {
       });
     }
 
-    // 30-50%: swap button width/height and rotate shaft 90°
-    const morphProgress =
-      targetRef.current <= 0.3
-        ? 0
-        : targetRef.current >= 0.5
-          ? 1
-          : (targetRef.current - 0.3) / 0.2;
+    if (isMobileRef.current) {
+      // Mobile: 20-50% shaft fades, 30-60% button shrinks to zero
+      const mobileShaftFade =
+        targetRef.current <= 0.2
+          ? 0
+          : targetRef.current >= 0.5
+            ? 1
+            : (targetRef.current - 0.2) / 0.3;
 
-    if (scrollBtnRef.current) {
-      gsap.to(scrollBtnRef.current, {
-        width: gsap.utils.interpolate("3rem", "5rem", morphProgress),
-        height: gsap.utils.interpolate("5rem", "3rem", morphProgress),
-        duration: 0.3,
-        overwrite: true,
-      });
+      const mobileShrink =
+        targetRef.current <= 0.3
+          ? 0
+          : targetRef.current >= 0.6
+            ? 1
+            : (targetRef.current - 0.3) / 0.3;
+
+      if (arrowShaftRef.current) {
+        gsap.to(arrowShaftRef.current, {
+          opacity: 1 - mobileShaftFade,
+          duration: 0.3,
+          overwrite: true,
+        });
+      }
+
+      if (scrollBtnRef.current) {
+        gsap.to(scrollBtnRef.current, {
+          width: gsap.utils.interpolate("2rem", "0rem", mobileShrink),
+          height: gsap.utils.interpolate("3.5rem", "0rem", mobileShrink),
+          opacity: 1 - mobileShrink,
+          duration: 0.3,
+          overwrite: true,
+        });
+      }
+    } else {
+      // Desktop: morph into toggle
+      // 30-50%: swap button width/height and rotate shaft 90°
+      const morphProgress =
+        targetRef.current <= 0.3
+          ? 0
+          : targetRef.current >= 0.5
+            ? 1
+            : (targetRef.current - 0.3) / 0.2;
+
+      if (scrollBtnRef.current) {
+        gsap.to(scrollBtnRef.current, {
+          width: gsap.utils.interpolate("3rem", "5rem", morphProgress),
+          height: gsap.utils.interpolate("5rem", "3rem", morphProgress),
+          duration: 0.3,
+          overwrite: true,
+        });
+      }
+
+      // 50-70%: shrink line length
+      const shrinkProgress =
+        targetRef.current <= 0.5
+          ? 0
+          : targetRef.current >= 0.7
+            ? 1
+            : (targetRef.current - 0.5) / 0.2;
+
+      // 60-75%: shaft fades out
+      const shaftFadeProgress =
+        targetRef.current <= 0.6
+          ? 0
+          : targetRef.current >= 0.75
+            ? 1
+            : (targetRef.current - 0.6) / 0.15;
+
+      // 80-95%: knob fades in
+      const knobFadeProgress =
+        targetRef.current <= 0.8
+          ? 0
+          : targetRef.current >= 0.95
+            ? 1
+            : (targetRef.current - 0.8) / 0.15;
+
+      if (arrowShaftRef.current) {
+        gsap.to(arrowShaftRef.current, {
+          attr: {
+            y1: gsap.utils.interpolate(40, 128, shrinkProgress),
+            y2: gsap.utils.interpolate(216, 128, shrinkProgress),
+          },
+          opacity: 1 - shaftFadeProgress,
+          rotation: 90 * morphProgress,
+          transformOrigin: "center center",
+          duration: 0.3,
+          overwrite: true,
+        });
+      }
+
+      // Knob: grow from center, then slide to toggle position
+      if (knobRef.current && scrollBtnRef.current) {
+        const btnW = scrollBtnRef.current.offsetWidth;
+        const knobW = knobRef.current.offsetWidth;
+        const pad = parseFloat(getComputedStyle(knobRef.current).left);
+        const centerX = (btnW - knobW) / 2 - pad;
+        const rightX = btnW - knobW - 2 * pad;
+        const targetX = toggleStateRef.current === 0 ? 0 : rightX;
+
+        gsap.to(knobRef.current, {
+          opacity: knobFadeProgress > 0 ? 1 : 0,
+          scale: knobFadeProgress,
+          x: gsap.utils.interpolate(centerX, targetX, knobFadeProgress),
+          duration: 0.3,
+          overwrite: true,
+        });
+      }
     }
 
-    // 50-70%: shrink line length
-    const shrinkProgress =
-      targetRef.current <= 0.5
-        ? 0
-        : targetRef.current >= 0.7
-          ? 1
-          : (targetRef.current - 0.5) / 0.2;
-
-    // 70-90%: crossfade shaft → knob
-    const widenProgress =
-      targetRef.current <= 0.7
-        ? 0
-        : targetRef.current >= 0.9
-          ? 1
-          : (targetRef.current - 0.7) / 0.2;
-
-    if (arrowShaftRef.current) {
-      gsap.to(arrowShaftRef.current, {
-        attr: {
-          y1: gsap.utils.interpolate(40, 128, shrinkProgress),
-          y2: gsap.utils.interpolate(216, 128, shrinkProgress),
-        },
-        opacity: 1 - widenProgress,
-        rotation: 90 * morphProgress,
-        transformOrigin: "center center",
-        duration: 0.3,
-        overwrite: true,
-      });
-    }
-
-    // Knob: grow from center, then slide to toggle position
-    if (knobRef.current && scrollBtnRef.current) {
-      const btnW = scrollBtnRef.current.offsetWidth;
-      const knobW = knobRef.current.offsetWidth;
-      const pad = parseFloat(getComputedStyle(knobRef.current).left);
-      const centerX = (btnW - knobW) / 2 - pad;
-      const rightX = btnW - knobW - 2 * pad;
-      const targetX = toggleStateRef.current === 0 ? 0 : rightX;
-
-      gsap.to(knobRef.current, {
-        opacity: widenProgress > 0 ? 1 : 0,
-        scale: widenProgress,
-        x: gsap.utils.interpolate(centerX, targetX, widenProgress),
-        duration: 0.3,
-        overwrite: true,
-      });
+    // Show particle section text (one-time trigger)
+    if (!particleTextVisible && targetRef.current >= 0.9) {
+      setParticleTextVisible(true);
     }
 
     gsap.to(tl, {
@@ -302,9 +361,25 @@ const Effect1: NextPageWithLayout = () => {
       scrubTo(targetRef.current + Math.sign(e.deltaY) * SCROLL_STEP);
     };
 
+    let touchStartY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const currentY = e.touches[0].clientY;
+      const deltaY = touchStartY - currentY;
+      scrubTo(targetRef.current + Math.sign(deltaY) * SCROLL_STEP);
+      touchStartY = currentY;
+    };
+
     page.addEventListener("wheel", onWheel, { passive: false });
+    page.addEventListener("touchstart", onTouchStart, { passive: true });
+    page.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
       page.removeEventListener("wheel", onWheel);
+      page.removeEventListener("touchstart", onTouchStart);
+      page.removeEventListener("touchmove", onTouchMove);
       tl.kill();
       tlRef.current = null;
     };
@@ -318,6 +393,7 @@ const Effect1: NextPageWithLayout = () => {
       particleSceneRef.current?.toggleModel();
       const next = toggleStateRef.current === 0 ? 1 : 0;
       toggleStateRef.current = next;
+      setActiveModelIndex(next);
 
       if (knobRef.current && scrollBtnRef.current) {
         const btnW = scrollBtnRef.current.offsetWidth;
@@ -330,14 +406,13 @@ const Effect1: NextPageWithLayout = () => {
           duration: 0.3,
           ease: "power2.inOut",
         });
-        // Unlock after model animation completes (0.8s + 0.3s delay)
         setTimeout(() => {
           toggleLockRef.current = false;
-        }, 1100);
+        }, 500);
       } else {
         setTimeout(() => {
           toggleLockRef.current = false;
-        }, 1100);
+        }, 500);
       }
     } else {
       const step = 0.04;
@@ -369,6 +444,63 @@ const Effect1: NextPageWithLayout = () => {
       </div>
       <div ref={particleRef} className={styles.particleWrapper}>
         <ParticleScene handleRef={particleSceneRef} models={PARTICLE_MODELS} />
+        <div
+          className={styles.particleOverlay}
+          style={{
+            "--text-color": activeModelIndex === 0 ? "var(--color-fg)" : "var(--color-accent)",
+            "--text-hover-color": activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)",
+          } as React.CSSProperties}
+        >
+          <AnimatedText
+            label="Honda CB650R"
+            duration={1.5}
+            animationState={particleTextVisible}
+            openAnimation={OPEN_ANIM_DOWN}
+            className={styles.particleTitle}
+          />
+          <div className={styles.particleFeatures}>
+            <AnimatedText
+              label="649cc Inline-Four Engine"
+              delay={0.3}
+              duration={1.5}
+              animationState={particleTextVisible}
+              openAnimation={OPEN_ANIM_DOWN}
+              className={styles.particleFeature}
+            />
+            <AnimatedText
+              label="Neo Sports Café Design"
+              delay={0.5}
+              duration={1.5}
+              animationState={particleTextVisible}
+              openAnimation={OPEN_ANIM_DOWN}
+              className={styles.particleFeature}
+            />
+            <AnimatedText
+              label="Showa SFF-BP Inverted Forks"
+              delay={0.7}
+              duration={1.5}
+              animationState={particleTextVisible}
+              openAnimation={OPEN_ANIM_DOWN}
+              className={styles.particleFeature}
+            />
+            <AnimatedText
+              label="Full-Color TFT Display"
+              delay={0.9}
+              duration={1.5}
+              animationState={particleTextVisible}
+              openAnimation={OPEN_ANIM_DOWN}
+              className={styles.particleFeature}
+            />
+            <AnimatedText
+              label="Lightweight & Agile"
+              delay={1.1}
+              duration={1.5}
+              animationState={particleTextVisible}
+              openAnimation={OPEN_ANIM_DOWN}
+              className={styles.particleFeature}
+            />
+          </div>
+        </div>
       </div>
       <Preloader onComplete={handlePreloaderComplete} />
       {animationsStarted && (
@@ -417,12 +549,14 @@ const Effect1: NextPageWithLayout = () => {
             </svg>
             <div ref={knobRef} className={styles.toggleKnob} />
           </button>
-          <ToolBar
-            foreground="var(--color-fg)"
-            background="transparent"
-            position={{ bottom: "2rem", right: "2rem" }}
-            onHelpToggle={handleHelpToggle}
-          />
+          {!isMobileRef.current && (
+            <ToolBar
+              foreground="var(--color-fg)"
+              background="transparent"
+              position={{ bottom: "2rem", right: "2rem" }}
+              onHelpToggle={handleHelpToggle}
+            />
+          )}
           {helpMode && (
             <CursorFollower initialPosition={cursorPosition.current} />
           )}
