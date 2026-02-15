@@ -13,8 +13,13 @@ export interface ModelDefinition {
   placeOnLoad?: boolean;
 }
 
+export interface ParticleSceneHandle {
+  toggleModel: () => void;
+}
+
 interface ParticleSceneProps {
   models: ModelDefinition[];
+  handleRef?: React.RefObject<ParticleSceneHandle | null>;
 }
 
 function createGrainTexture(): string {
@@ -36,11 +41,12 @@ function createGrainTexture(): string {
   return canvas.toDataURL();
 }
 
-const ParticleScene = ({ models: modelConfigs }: ParticleSceneProps) => {
+const ParticleScene = ({ models: modelConfigs, handleRef }: ParticleSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const grainRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
+  const toggleRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -101,7 +107,11 @@ const ParticleScene = ({ models: modelConfigs }: ParticleSceneProps) => {
         activeIndex = (activeIndex + 1) % modelInstances.length;
         modelInstances[activeIndex].add();
       };
-      canvas.addEventListener("click", handleClick);
+      toggleRef.current = handleClick;
+      if (handleRef) {
+        (handleRef as React.MutableRefObject<ParticleSceneHandle | null>).current = { toggleModel: handleClick };
+      }
+
 
       const handleMouseMove = (e: MouseEvent) => {
         const r = canvas.getBoundingClientRect();
@@ -139,7 +149,6 @@ const ParticleScene = ({ models: modelConfigs }: ParticleSceneProps) => {
 
       cleanup = () => {
         cancelAnimationFrame(frameId);
-        canvas.removeEventListener("click", handleClick);
         canvas.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("resize", handleResize);
 

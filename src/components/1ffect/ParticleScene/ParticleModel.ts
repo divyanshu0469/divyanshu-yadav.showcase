@@ -28,6 +28,7 @@ export class ParticleModel {
   private scene: THREE.Scene;
   private background: string;
   private placeOnLoad: boolean;
+  private pendingAdd = false;
   private particles!: THREE.Points;
   private particlesGeometry!: THREE.BufferGeometry;
   private loader: GLTFLoader;
@@ -106,16 +107,27 @@ export class ParticleModel {
         this.particleMaterial,
       );
 
-      if (this.placeOnLoad) {
+      if (this.placeOnLoad || this.pendingAdd) {
         this.add();
       }
     });
   }
 
   add(): void {
-    if (!this.particles) return;
+    if (!this.particles) {
+      this.pendingAdd = true;
+      return;
+    }
+    this.pendingAdd = false;
+
+    // Kill any in-flight tweens to avoid conflicts
+    gsap.killTweensOf(this.particleMaterial.uniforms.uScale);
+    gsap.killTweensOf(this.particles.rotation);
+
     this.scene.add(this.particles);
 
+    // Always start from 0 so particles emerge from center
+    this.particleMaterial.uniforms.uScale.value = 0;
     gsap.to(this.particleMaterial.uniforms.uScale, {
       value: 1,
       duration: 0.8,
@@ -123,20 +135,25 @@ export class ParticleModel {
       ease: "power3.out",
     });
 
-    if (!this.isActive) {
-      gsap.fromTo(
-        this.particles.rotation,
-        { y: Math.PI },
-        { y: 0, duration: 0.8, ease: "power3.out" },
-      );
-      this.onBackgroundChange?.(this.background);
-    }
+    gsap.fromTo(
+      this.particles.rotation,
+      { y: Math.PI },
+      { y: 0, duration: 0.8, ease: "power3.out" },
+    );
+    this.onBackgroundChange?.(this.background);
 
     this.isActive = true;
   }
 
   remove(): void {
+    this.pendingAdd = false;
     if (!this.particles || !this.isActive) return;
+
+    // Kill any in-flight tweens to avoid conflicts
+    gsap.killTweensOf(this.particleMaterial.uniforms.uScale);
+    gsap.killTweensOf(this.particles.rotation);
+
+    this.isActive = false;
 
     gsap.to(this.particleMaterial.uniforms.uScale, {
       value: 0,
@@ -144,7 +161,6 @@ export class ParticleModel {
       ease: "power3.out",
       onComplete: () => {
         this.scene.remove(this.particles);
-        this.isActive = false;
       },
     });
 

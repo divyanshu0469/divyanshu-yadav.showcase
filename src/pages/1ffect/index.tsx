@@ -1,4 +1,10 @@
-import { useState, useEffect, useLayoutEffect, useRef, ReactElement } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  ReactElement,
+} from "react";
 import { Anton, Inter } from "next/font/google";
 import dynamic from "next/dynamic";
 import gsap from "gsap";
@@ -9,6 +15,8 @@ import styles from "./1ffect.module.css";
 import ToolBar from "@/components/common/ToolBar";
 import { ThemeLayout } from "@/components/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
+
+import type { ParticleSceneHandle } from "@/components/1ffect/ParticleScene/ParticleScene";
 
 const ParticleScene = dynamic(
   () => import("@/components/1ffect/ParticleScene/ParticleScene"),
@@ -46,7 +54,11 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const CursorFollower = ({ initialPosition }: { initialPosition: { x: number; y: number } }) => {
+const CursorFollower = ({
+  initialPosition,
+}: {
+  initialPosition: { x: number; y: number };
+}) => {
   const squareRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,6 +112,17 @@ const Effect1: NextPageWithLayout = () => {
   const pageRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const particleRef = useRef<HTMLDivElement>(null);
+  const scrollBtnRef = useRef<HTMLButtonElement>(null);
+  const arrowHeadLeftRef = useRef<SVGLineElement>(null);
+  const arrowHeadRightRef = useRef<SVGLineElement>(null);
+  const arrowShaftRef = useRef<SVGLineElement>(null);
+  const tlRef = useRef<gsap.core.Timeline | null>(null);
+  const targetRef = useRef(0);
+  const heroRadiusOnRef = useRef(false);
+  const particleSceneRef = useRef<ParticleSceneHandle>(null);
+  const knobRef = useRef<HTMLDivElement>(null);
+  const toggleStateRef = useRef(0);
+  const toggleLockRef = useRef(false);
 
   useLayoutEffect(() => {
     if (particleRef.current) {
@@ -115,6 +138,140 @@ const Effect1: NextPageWithLayout = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
+  const scrubTo = (value: number) => {
+    const hero = heroRef.current;
+    const tl = tlRef.current;
+    if (!hero || !tl) return;
+
+    const prev = targetRef.current;
+    targetRef.current = Math.min(1, Math.max(0, value));
+
+    // Hero: 0 → 1rem as soon as scroll starts
+    if (!heroRadiusOnRef.current && targetRef.current > 0) {
+      heroRadiusOnRef.current = true;
+      gsap.to(hero, {
+        borderRadius: "1rem",
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    } else if (heroRadiusOnRef.current && targetRef.current === 0 && prev > 0) {
+      heroRadiusOnRef.current = false;
+      gsap.to(hero, { borderRadius: "0rem", duration: 0.3, ease: "power2.in" });
+    }
+
+
+    // 10-20%: chevron arms shrink toward center point (128, 216)
+    const chevronProgress =
+      targetRef.current <= 0.1
+        ? 0
+        : targetRef.current >= 0.2
+          ? 1
+          : (targetRef.current - 0.1) / 0.1;
+
+    // 15-20%: chevron fades out
+    const chevronOpacity =
+      targetRef.current <= 0.15
+        ? 1
+        : targetRef.current >= 0.2
+          ? 0
+          : 1 - (targetRef.current - 0.15) / 0.05;
+
+    if (arrowHeadLeftRef.current) {
+      gsap.to(arrowHeadLeftRef.current, {
+        attr: {
+          x2: gsap.utils.interpolate(56, 128, chevronProgress),
+          y2: gsap.utils.interpolate(144, 216, chevronProgress),
+        },
+        opacity: chevronOpacity,
+        duration: 0.3,
+        overwrite: true,
+      });
+    }
+    if (arrowHeadRightRef.current) {
+      gsap.to(arrowHeadRightRef.current, {
+        attr: {
+          x2: gsap.utils.interpolate(200, 128, chevronProgress),
+          y2: gsap.utils.interpolate(144, 216, chevronProgress),
+        },
+        opacity: chevronOpacity,
+        duration: 0.3,
+        overwrite: true,
+      });
+    }
+
+    // 30-50%: swap button width/height and rotate shaft 90°
+    const morphProgress =
+      targetRef.current <= 0.3
+        ? 0
+        : targetRef.current >= 0.5
+          ? 1
+          : (targetRef.current - 0.3) / 0.2;
+
+    if (scrollBtnRef.current) {
+      gsap.to(scrollBtnRef.current, {
+        width: gsap.utils.interpolate("3rem", "5rem", morphProgress),
+        height: gsap.utils.interpolate("5rem", "3rem", morphProgress),
+        duration: 0.3,
+        overwrite: true,
+      });
+    }
+
+    // 50-70%: shrink line length
+    const shrinkProgress =
+      targetRef.current <= 0.5
+        ? 0
+        : targetRef.current >= 0.7
+          ? 1
+          : (targetRef.current - 0.5) / 0.2;
+
+    // 70-90%: crossfade shaft → knob
+    const widenProgress =
+      targetRef.current <= 0.7
+        ? 0
+        : targetRef.current >= 0.9
+          ? 1
+          : (targetRef.current - 0.7) / 0.2;
+
+    if (arrowShaftRef.current) {
+      gsap.to(arrowShaftRef.current, {
+        attr: {
+          y1: gsap.utils.interpolate(40, 128, shrinkProgress),
+          y2: gsap.utils.interpolate(216, 128, shrinkProgress),
+        },
+        opacity: 1 - widenProgress,
+        rotation: 90 * morphProgress,
+        transformOrigin: "center center",
+        duration: 0.3,
+        overwrite: true,
+      });
+    }
+
+    // Knob: grow from center, then slide to toggle position
+    if (knobRef.current && scrollBtnRef.current) {
+      const btnW = scrollBtnRef.current.offsetWidth;
+      const knobW = knobRef.current.offsetWidth;
+      const pad = parseFloat(getComputedStyle(knobRef.current).left);
+      const centerX = (btnW - knobW) / 2 - pad;
+      const rightX = btnW - knobW - 2 * pad;
+      const targetX = toggleStateRef.current === 0 ? 0 : rightX;
+
+      gsap.to(knobRef.current, {
+        opacity: widenProgress > 0 ? 1 : 0,
+        scale: widenProgress,
+        x: gsap.utils.interpolate(centerX, targetX, widenProgress),
+        duration: 0.3,
+        overwrite: true,
+      });
+    }
+
+    gsap.to(tl, {
+      progress: targetRef.current,
+      duration: 0.5,
+      ease: "power2.out",
+      overwrite: true,
+    });
+  };
+
   useEffect(() => {
     if (!animationsStarted) return;
 
@@ -125,41 +282,71 @@ const Effect1: NextPageWithLayout = () => {
 
     const tl = gsap.timeline({ paused: true });
     tl.to(hero, { scale: 0.9, ease: "none", duration: 1 }, 0);
-    tl.fromTo(particle, { yPercent: 100 }, { yPercent: 0, ease: "none", duration: 1 }, 0);
-    // Particle border-radius: 1rem → 0 over the last 30% of scroll
-    tl.fromTo(particle, { borderRadius: "1rem" }, { borderRadius: "0rem", ease: "power2.out", duration: 0.3 }, 0.7);
+    tl.fromTo(
+      particle,
+      { yPercent: 100 },
+      { yPercent: 0, ease: "none", duration: 1 },
+      0,
+    );
+    tl.fromTo(
+      particle,
+      { borderRadius: "1rem" },
+      { borderRadius: "0rem", ease: "power2.out", duration: 0.3 },
+      0.7,
+    );
+    tlRef.current = tl;
 
-    let target = 0;
-    let heroRadiusOn = false;
-
+    const SCROLL_STEP = 0.04;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const prev = target;
-      target = Math.min(1, Math.max(0, target + e.deltaY * 0.001));
-
-      // Hero: 0 → 1rem as soon as scroll starts
-      if (!heroRadiusOn && target > 0) {
-        heroRadiusOn = true;
-        gsap.to(hero, { borderRadius: "1rem", duration: 0.3, ease: "power2.out" });
-      } else if (heroRadiusOn && target === 0 && prev > 0) {
-        heroRadiusOn = false;
-        gsap.to(hero, { borderRadius: "0rem", duration: 0.3, ease: "power2.in" });
-      }
-
-      gsap.to(tl, {
-        progress: target,
-        duration: 0.5,
-        ease: "power2.out",
-        overwrite: true,
-      });
+      scrubTo(targetRef.current + Math.sign(e.deltaY) * SCROLL_STEP);
     };
 
     page.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       page.removeEventListener("wheel", onWheel);
       tl.kill();
+      tlRef.current = null;
     };
   }, [animationsStarted]);
+
+  const handleButtonClick = () => {
+    if (targetRef.current >= 0.9) {
+      if (toggleLockRef.current) return;
+      toggleLockRef.current = true;
+
+      particleSceneRef.current?.toggleModel();
+      const next = toggleStateRef.current === 0 ? 1 : 0;
+      toggleStateRef.current = next;
+
+      if (knobRef.current && scrollBtnRef.current) {
+        const btnW = scrollBtnRef.current.offsetWidth;
+        const knobW = knobRef.current.offsetWidth;
+        const pad = parseFloat(getComputedStyle(knobRef.current).left);
+        const rightX = btnW - knobW - 2 * pad;
+
+        gsap.to(knobRef.current, {
+          x: next === 0 ? 0 : rightX,
+          duration: 0.3,
+          ease: "power2.inOut",
+        });
+        // Unlock after model animation completes (0.8s + 0.3s delay)
+        setTimeout(() => {
+          toggleLockRef.current = false;
+        }, 1100);
+      } else {
+        setTimeout(() => {
+          toggleLockRef.current = false;
+        }, 1100);
+      }
+    } else {
+      const step = 0.04;
+      const id = setInterval(() => {
+        scrubTo(targetRef.current + step);
+        if (targetRef.current >= 1) clearInterval(id);
+      }, 35);
+    }
+  };
 
   const handlePreloaderComplete = () => {
     setAnimationsStarted(true);
@@ -181,18 +368,64 @@ const Effect1: NextPageWithLayout = () => {
         </div>
       </div>
       <div ref={particleRef} className={styles.particleWrapper}>
-        <ParticleScene models={PARTICLE_MODELS} />
+        <ParticleScene handleRef={particleSceneRef} models={PARTICLE_MODELS} />
       </div>
       <Preloader onComplete={handlePreloaderComplete} />
       {animationsStarted && (
         <>
+          <button
+            ref={scrollBtnRef}
+            className={styles.scrollButton}
+            onClick={handleButtonClick}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
+              <rect width="256" height="256" fill="none" />
+              <line
+                ref={arrowShaftRef}
+                x1="128"
+                y1="40"
+                x2="128"
+                y2="216"
+                fill="none"
+                stroke="var(--color-accent)"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="8"
+              />
+              <line
+                ref={arrowHeadLeftRef}
+                x1="128"
+                y1="216"
+                x2="56"
+                y2="144"
+                fill="none"
+                stroke="var(--color-accent)"
+                strokeLinecap="round"
+                strokeWidth="8"
+              />
+              <line
+                ref={arrowHeadRightRef}
+                x1="128"
+                y1="216"
+                x2="200"
+                y2="144"
+                fill="none"
+                stroke="var(--color-accent)"
+                strokeLinecap="round"
+                strokeWidth="8"
+              />
+            </svg>
+            <div ref={knobRef} className={styles.toggleKnob} />
+          </button>
           <ToolBar
             foreground="var(--color-fg)"
             background="transparent"
             position={{ bottom: "2rem", right: "2rem" }}
             onHelpToggle={handleHelpToggle}
           />
-          {helpMode && <CursorFollower initialPosition={cursorPosition.current} />}
+          {helpMode && (
+            <CursorFollower initialPosition={cursorPosition.current} />
+          )}
         </>
       )}
     </div>
