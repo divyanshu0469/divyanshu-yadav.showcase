@@ -1,8 +1,8 @@
 .button {
-  z-index: 10;
+  z-index: 10000;
   background-color: transparent;
   mix-blend-mode: difference;
-  position: absolute;
+  position: fixed;
   width: var(--common-toolbar-button-size);
   height: var(--common-toolbar-button-size);
   display: flex;

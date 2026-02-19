@@ -184,7 +184,6 @@ const Effect1: NextPageWithLayout = () => {
       gsap.to(hero, { borderRadius: "0rem", duration: 0.3, ease: "power2.in" });
     }
 
-
     // 10-20%: chevron arms shrink toward center point (128, 216)
     const chevronProgress =
       targetRef.current <= 0.1
@@ -347,16 +346,20 @@ const Effect1: NextPageWithLayout = () => {
         const widthEase = "cubic-bezier(0.85, 0, 0.15, 1)";
         const textEase = "cubic-bezier(0.22, 1, 0.36, 1)";
         const stagger = 0.3;
-        const expandedWidth = isMobileRef.current ? "3rem" : "4.5rem";
+        const expandedWidth = isMobileRef.current ? "3.25rem" : "4.25rem";
         const lineTl = gsap.timeline({ paused: true });
 
         lineRefs.current.forEach((el, idx) => {
           if (el) {
-            lineTl.to(el, {
-              width: expandedWidth,
-              duration: 0.5,
-              ease: widthEase,
-            }, idx * stagger);
+            lineTl.to(
+              el,
+              {
+                width: expandedWidth,
+                duration: 0.5,
+                ease: widthEase,
+              },
+              idx * stagger,
+            );
           }
         });
 
@@ -516,67 +519,80 @@ const Effect1: NextPageWithLayout = () => {
 
     // --- Toggle Off ---
     if (isTogglingOff) {
-      revealTlRef.current?.reverse();
+      revealTlRef.current?.kill();
+      revealTlRef.current = null;
+      gsap.set(hEl, { opacity: 0 });
+
+      // Clean up ALL images except the one being toggled off
+      revealImgRefs.current.forEach((img, i) => {
+        if (!img) return;
+        gsap.killTweensOf(img);
+        if (i !== idx) {
+          gsap.set(img, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
+        }
+      });
+
+      const imgEl = revealImgRefs.current[idx];
+      if (!imgEl) return;
+
+      // Always close with scale-down from center
+      gsap.set(imgEl, { clipPath: "none", transformOrigin: "center center" });
+      const offTl = gsap.timeline({
+        onComplete: () => {
+          gsap.set(imgEl, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
+        },
+      });
+      offTl.to(imgEl, { scale: 0, duration: 0.5, ease: "power2.in" });
+
       return;
     }
 
-    // --- Cross-Transition ---
+    // --- Cross-Transition (new scales up from center over old) ---
     if (isCrossTransition) {
       revealTlRef.current?.kill();
       revealTlRef.current = null;
       gsap.set(hEl, { opacity: 0 });
 
-      const oldImg = revealImgRefs.current[prevIdx!];
       const newImg = revealImgRefs.current[idx];
-      if (!oldImg || !newImg) return;
+      if (!newImg) return;
 
-      const ascending = idx > prevIdx!;
-      gsap.set(newImg, { opacity: 1 });
+      // Reset ALL images to clean state, then set up only old + new
+      revealImgRefs.current.forEach((img, i) => {
+        if (!img) return;
+        if (i === prevIdx) {
+          gsap.set(img, { opacity: 1, scale: 1, clipPath: "none", zIndex: 0, clearProps: "transformOrigin" });
+        } else if (i === idx) {
+          gsap.set(img, { opacity: 1, scale: 0, clipPath: "none", transformOrigin: "center center", zIndex: 1 });
+        } else {
+          gsap.set(img, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
+        }
+      });
+
+      const oldImg = revealImgRefs.current[prevIdx!];
 
       const crossTl = gsap.timeline({
         onComplete: () => {
-          gsap.set(oldImg, { opacity: 0 });
+          if (oldImg) gsap.set(oldImg, { opacity: 0, scale: 1, clearProps: "zIndex" });
+          gsap.set(newImg, { clearProps: "zIndex" });
           // Build reversible state timeline for toggle-off / scroll-up
           const stateTl = gsap.timeline({ paused: true });
           stateTl.fromTo(
             newImg,
-            { clipPath: "inset(0% 0% 100% 0%)" },
-            { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out", immediateRender: false },
+            { scale: 0 },
+            {
+              scale: 1,
+              duration: 0.8,
+              ease: "power4.out",
+              immediateRender: false,
+            },
           );
           stateTl.progress(1);
           revealTlRef.current = stateTl;
         },
       });
 
-      if (ascending) {
-        // New from bottom→top, old shrinks bottom→top
-        crossTl.fromTo(
-          newImg,
-          { clipPath: "inset(100% 0% 0% 0%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
-          0,
-        );
-        crossTl.fromTo(
-          oldImg,
-          { clipPath: "inset(0% 0% 0% 0%)" },
-          { clipPath: "inset(0% 0% 100% 0%)", duration: 0.8, ease: "power4.out" },
-          0,
-        );
-      } else {
-        // New from top→bottom, old shrinks top→bottom
-        crossTl.fromTo(
-          newImg,
-          { clipPath: "inset(0% 0% 100% 0%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
-          0,
-        );
-        crossTl.fromTo(
-          oldImg,
-          { clipPath: "inset(0% 0% 0% 0%)" },
-          { clipPath: "inset(100% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
-          0,
-        );
-      }
+      // New image scales from 0 to 1, covering the old image
+      crossTl.to(newImg, { scale: 1, duration: 0.8, ease: "power4.out" }, 0);
 
       revealTlRef.current = crossTl;
       return;
@@ -586,9 +602,12 @@ const Effect1: NextPageWithLayout = () => {
     revealTlRef.current?.kill();
     revealTlRef.current = null;
 
-    // Hide all images first
+    // Reset all images to clean state
     revealImgRefs.current.forEach((img) => {
-      if (img) gsap.set(img, { opacity: 0 });
+      if (img) {
+        gsap.killTweensOf(img);
+        gsap.set(img, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
+      }
     });
 
     const imgEl = revealImgRefs.current[idx];
@@ -596,7 +615,7 @@ const Effect1: NextPageWithLayout = () => {
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const lineLength = Math.min(vw, vh) * (isMobileRef.current ? 0.7 : 0.5);
+    const lineLength = Math.min(vw, vh) * (isMobileRef.current ? 0.7 : 0.7);
     const container = hEl.parentElement;
     if (container) gsap.set(container, { width: lineLength });
     gsap.set(hEl, { width: 0, opacity: 1, top: 0, clipPath: "none" });
@@ -608,30 +627,27 @@ const Effect1: NextPageWithLayout = () => {
     // 1. Line grows left → right
     revealTl.to(hEl, {
       width: "100%",
-      duration: 0.6,
+      duration: 0.3,
       ease: "cubic-bezier(0.85, 0, 0.15, 1)",
     });
 
-    // 2. Image reveals top → bottom, line follows the bottom edge
+    // 2. Image reveals top → bottom, line follows the bottom edge, then disappears
     revealTl.fromTo(
       imgEl,
       { clipPath: "inset(0% 0% 100% 0%)" },
       { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
       "reveal",
     );
-    revealTl.to(hEl, {
-      top: imgH,
-      duration: 0.8,
-      ease: "power4.out",
-    }, "reveal");
-
-    // 3. Line shrinks from left → right then disappears
-    revealTl.fromTo(
+    revealTl.to(
       hEl,
-      { clipPath: "inset(0% 0% 0% 0%)" },
-      { clipPath: "inset(0% 0% 0% 100%)", duration: 0.5, ease: "cubic-bezier(0.85, 0, 0.15, 1)" },
-      "+=0.2",
+      {
+        top: imgH,
+        duration: 0.8,
+        ease: "power4.out",
+      },
+      "reveal",
     );
+    revealTl.set(hEl, { opacity: 0 });
 
     revealTlRef.current = revealTl;
   };
@@ -659,10 +675,18 @@ const Effect1: NextPageWithLayout = () => {
         <ParticleScene handleRef={particleSceneRef} models={PARTICLE_MODELS} />
         <div
           className={styles.particleOverlay}
-          style={{
-            "--text-color": activeModelIndex === 0 ? "var(--color-fg)" : "var(--color-accent)",
-            "--text-hover-color": activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)",
-          } as React.CSSProperties}
+          style={
+            {
+              "--text-color":
+                activeModelIndex === 0
+                  ? "var(--color-fg)"
+                  : "var(--color-accent)",
+              "--text-hover-color":
+                activeModelIndex === 0
+                  ? "var(--color-accent)"
+                  : "var(--color-bg)",
+            } as React.CSSProperties
+          }
         >
           <AnimatedText
             label="Honda"
@@ -726,23 +750,40 @@ const Effect1: NextPageWithLayout = () => {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              ref={(el) => { lineRefs.current[i] = el; }}
+              ref={(el) => {
+                lineRefs.current[i] = el;
+              }}
               className={styles.particleLine}
               onClick={() => handleLineClick(i)}
-              style={{
-                backgroundColor: activeModelIndex === 0 ? "var(--color-fg)" : "var(--color-accent)",
-                borderTop: activeLineIndex === i
-                  ? `3px solid ${activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)"}`
-                  : "none",
-                "--line-text-color": activeModelIndex === 0 ? "var(--color-bg)" : "var(--color-fg)",
-                "--line-text-hover": activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)",
-              } as React.CSSProperties}
+              style={
+                {
+                  backgroundColor:
+                    activeModelIndex === 0
+                      ? "var(--color-fg)"
+                      : "var(--color-accent)",
+                  borderLeft:
+                    activeLineIndex === i
+                      ? `0.25rem solid ${activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)"}`
+                      : "none",
+                  "--line-text-color":
+                    activeModelIndex === 0
+                      ? "var(--color-bg)"
+                      : "var(--color-fg)",
+                  "--line-text-hover":
+                    activeModelIndex === 0
+                      ? "var(--color-accent)"
+                      : "var(--color-bg)",
+                } as React.CSSProperties
+              }
             >
               <span
-                ref={(el) => { lineNumberRefs.current[i] = el; }}
+                ref={(el) => {
+                  lineNumberRefs.current[i] = el;
+                }}
                 className={styles.particleLineNumber}
               >
-                N<sup>o</sup>{i + 1}
+                N<sup>o</sup>
+                {i + 1}
               </span>
             </div>
           ))}
@@ -754,7 +795,10 @@ const Effect1: NextPageWithLayout = () => {
             style={{
               width: 0,
               height: "2px",
-              backgroundColor: activeModelIndex === 0 ? "var(--color-fg)" : "var(--color-accent)",
+              backgroundColor:
+                activeModelIndex === 0
+                  ? "var(--color-fg)"
+                  : "var(--color-accent)",
             }}
           />
           <div className={styles.revealImageStack}>
@@ -762,7 +806,9 @@ const Effect1: NextPageWithLayout = () => {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={i}
-                ref={(el) => { revealImgRefs.current[i] = el; }}
+                ref={(el) => {
+                  revealImgRefs.current[i] = el;
+                }}
                 src={src}
                 alt={`Honda CB650R ${i + 1}`}
                 className={styles.revealImage}
@@ -780,7 +826,12 @@ const Effect1: NextPageWithLayout = () => {
             className={styles.scrollButton}
             onClick={handleButtonClick}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 256 256"
+              preserveAspectRatio="xMidYMid meet"
+              style={{ width: "100%", height: "100%", display: "block" }}
+            >
               <rect width="256" height="256" fill="none" />
               <line
                 ref={arrowShaftRef}
