@@ -106,6 +106,12 @@ const CursorFollower = ({
   );
 };
 
+const IMAGE_PATHS = [
+  "/1ffect/images/cb650r-1.webp",
+  "/1ffect/images/cb650r-2.webp",
+  "/1ffect/images/cb650r-3.webp",
+];
+
 const OPEN_ANIM_DOWN = { yPercent: -100 };
 
 const Effect1: NextPageWithLayout = () => {
@@ -113,6 +119,7 @@ const Effect1: NextPageWithLayout = () => {
   const [helpMode, setHelpMode] = useState(false);
   const [particleTextVisible, setParticleTextVisible] = useState(false);
   const [activeModelIndex, setActiveModelIndex] = useState(0);
+  const [activeLineIndex, setActiveLineIndex] = useState<number | null>(null);
   const cursorPosition = useRef({ x: 0, y: 0 });
   const pageRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -129,6 +136,14 @@ const Effect1: NextPageWithLayout = () => {
   const toggleStateRef = useRef(0);
   const toggleLockRef = useRef(false);
   const isMobileRef = useRef(false);
+  const lineRefs = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+  const lineNumberRefs = useRef<(HTMLSpanElement | null)[]>([null, null, null]);
+  const lineTlRef = useRef<gsap.core.Timeline | null>(null);
+  const linesOpenRef = useRef(false);
+  const plusHRef = useRef<HTMLDivElement>(null);
+  const revealImgRefs = useRef<(HTMLImageElement | null)[]>([null, null, null]);
+  const revealTlRef = useRef<gsap.core.Timeline | null>(null);
+  const activeLineIndexRef = useRef<number | null>(null);
 
   useEffect(() => {
     isMobileRef.current = window.matchMedia("(max-width: 768px)").matches;
@@ -323,6 +338,70 @@ const Effect1: NextPageWithLayout = () => {
       setParticleTextVisible(true);
     }
 
+    // Open/close lines based on scroll position
+    if (targetRef.current >= 0.9 && !linesOpenRef.current) {
+      linesOpenRef.current = true;
+
+      // Build line timeline lazily on first open
+      if (!lineTlRef.current) {
+        const widthEase = "cubic-bezier(0.85, 0, 0.15, 1)";
+        const textEase = "cubic-bezier(0.22, 1, 0.36, 1)";
+        const stagger = 0.3;
+        const expandedWidth = isMobileRef.current ? "3rem" : "4.5rem";
+        const lineTl = gsap.timeline({ paused: true });
+
+        lineRefs.current.forEach((el, idx) => {
+          if (el) {
+            lineTl.to(el, {
+              width: expandedWidth,
+              duration: 0.5,
+              ease: widthEase,
+            }, idx * stagger);
+          }
+        });
+
+        const textStart = 0.5 + 2 * stagger;
+        lineNumberRefs.current.forEach((el, idx) => {
+          if (el) {
+            const parentH = lineRefs.current[idx]?.offsetHeight ?? 0;
+            lineTl.fromTo(
+              el,
+              { y: parentH },
+              { y: 0, duration: 0.5, ease: textEase },
+              textStart + idx * stagger,
+            );
+          }
+        });
+
+        lineTlRef.current = lineTl;
+      }
+
+      lineTlRef.current.play();
+    } else if (targetRef.current < 0.7 && linesOpenRef.current) {
+      linesOpenRef.current = false;
+      lineTlRef.current?.reverse();
+    }
+
+    // Hide image on scroll-up: mobile at < 0.9 (10%), desktop at < 0.7 (30%)
+    const imgHideThreshold = isMobileRef.current ? 0.9 : 0.7;
+    if (
+      targetRef.current < imgHideThreshold &&
+      revealTlRef.current &&
+      activeLineIndexRef.current !== null &&
+      !revealTlRef.current.reversed()
+    ) {
+      revealTlRef.current.reverse();
+    } else if (
+      targetRef.current >= 0.9 &&
+      revealTlRef.current &&
+      activeLineIndexRef.current !== null &&
+      revealTlRef.current.reversed()
+    ) {
+      const imgEl = revealImgRefs.current[activeLineIndexRef.current];
+      if (imgEl) gsap.set(imgEl, { opacity: 1 });
+      revealTlRef.current.play();
+    }
+
     gsap.to(tl, {
       progress: targetRef.current,
       duration: 0.5,
@@ -423,6 +502,140 @@ const Effect1: NextPageWithLayout = () => {
     }
   };
 
+  const handleLineClick = (idx: number) => {
+    const hEl = plusHRef.current;
+    if (!hEl) return;
+
+    const prevIdx = activeLineIndex;
+    const isTogglingOff = prevIdx === idx;
+    const isCrossTransition = prevIdx !== null && !isTogglingOff;
+
+    const newIdx = isTogglingOff ? null : idx;
+    setActiveLineIndex(newIdx);
+    activeLineIndexRef.current = newIdx;
+
+    // --- Toggle Off ---
+    if (isTogglingOff) {
+      revealTlRef.current?.reverse();
+      return;
+    }
+
+    // --- Cross-Transition ---
+    if (isCrossTransition) {
+      revealTlRef.current?.kill();
+      revealTlRef.current = null;
+      gsap.set(hEl, { opacity: 0 });
+
+      const oldImg = revealImgRefs.current[prevIdx!];
+      const newImg = revealImgRefs.current[idx];
+      if (!oldImg || !newImg) return;
+
+      const ascending = idx > prevIdx!;
+      gsap.set(newImg, { opacity: 1 });
+
+      const crossTl = gsap.timeline({
+        onComplete: () => {
+          gsap.set(oldImg, { opacity: 0 });
+          // Build reversible state timeline for toggle-off / scroll-up
+          const stateTl = gsap.timeline({ paused: true });
+          stateTl.fromTo(
+            newImg,
+            { clipPath: "inset(0% 0% 100% 0%)" },
+            { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out", immediateRender: false },
+          );
+          stateTl.progress(1);
+          revealTlRef.current = stateTl;
+        },
+      });
+
+      if (ascending) {
+        // New from bottom→top, old shrinks bottom→top
+        crossTl.fromTo(
+          newImg,
+          { clipPath: "inset(100% 0% 0% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
+          0,
+        );
+        crossTl.fromTo(
+          oldImg,
+          { clipPath: "inset(0% 0% 0% 0%)" },
+          { clipPath: "inset(0% 0% 100% 0%)", duration: 0.8, ease: "power4.out" },
+          0,
+        );
+      } else {
+        // New from top→bottom, old shrinks top→bottom
+        crossTl.fromTo(
+          newImg,
+          { clipPath: "inset(0% 0% 100% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
+          0,
+        );
+        crossTl.fromTo(
+          oldImg,
+          { clipPath: "inset(0% 0% 0% 0%)" },
+          { clipPath: "inset(100% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
+          0,
+        );
+      }
+
+      revealTlRef.current = crossTl;
+      return;
+    }
+
+    // --- First Reveal (no image currently showing) ---
+    revealTlRef.current?.kill();
+    revealTlRef.current = null;
+
+    // Hide all images first
+    revealImgRefs.current.forEach((img) => {
+      if (img) gsap.set(img, { opacity: 0 });
+    });
+
+    const imgEl = revealImgRefs.current[idx];
+    if (!imgEl) return;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const lineLength = Math.min(vw, vh) * (isMobileRef.current ? 0.7 : 0.5);
+    const container = hEl.parentElement;
+    if (container) gsap.set(container, { width: lineLength });
+    gsap.set(hEl, { width: 0, opacity: 1, top: 0, clipPath: "none" });
+    gsap.set(imgEl, { opacity: 1 });
+
+    const imgH = imgEl.offsetHeight;
+    const revealTl = gsap.timeline();
+
+    // 1. Line grows left → right
+    revealTl.to(hEl, {
+      width: "100%",
+      duration: 0.6,
+      ease: "cubic-bezier(0.85, 0, 0.15, 1)",
+    });
+
+    // 2. Image reveals top → bottom, line follows the bottom edge
+    revealTl.fromTo(
+      imgEl,
+      { clipPath: "inset(0% 0% 100% 0%)" },
+      { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power4.out" },
+      "reveal",
+    );
+    revealTl.to(hEl, {
+      top: imgH,
+      duration: 0.8,
+      ease: "power4.out",
+    }, "reveal");
+
+    // 3. Line shrinks from left → right then disappears
+    revealTl.fromTo(
+      hEl,
+      { clipPath: "inset(0% 0% 0% 0%)" },
+      { clipPath: "inset(0% 0% 0% 100%)", duration: 0.5, ease: "cubic-bezier(0.85, 0, 0.15, 1)" },
+      "+=0.2",
+    );
+
+    revealTlRef.current = revealTl;
+  };
+
   const handlePreloaderComplete = () => {
     setAnimationsStarted(true);
   };
@@ -452,7 +665,15 @@ const Effect1: NextPageWithLayout = () => {
           } as React.CSSProperties}
         >
           <AnimatedText
-            label="Honda CB650R"
+            label="Honda"
+            duration={1.5}
+            animationState={particleTextVisible}
+            openAnimation={OPEN_ANIM_DOWN}
+            className={styles.particleTitle}
+          />
+          <AnimatedText
+            label="CB650R"
+            delay={0.1}
             duration={1.5}
             animationState={particleTextVisible}
             openAnimation={OPEN_ANIM_DOWN}
@@ -499,6 +720,55 @@ const Effect1: NextPageWithLayout = () => {
               openAnimation={OPEN_ANIM_DOWN}
               className={styles.particleFeature}
             />
+          </div>
+        </div>
+        <div className={styles.particleLines}>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              ref={(el) => { lineRefs.current[i] = el; }}
+              className={styles.particleLine}
+              onClick={() => handleLineClick(i)}
+              style={{
+                backgroundColor: activeModelIndex === 0 ? "var(--color-fg)" : "var(--color-accent)",
+                borderTop: activeLineIndex === i
+                  ? `3px solid ${activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)"}`
+                  : "none",
+                "--line-text-color": activeModelIndex === 0 ? "var(--color-bg)" : "var(--color-fg)",
+                "--line-text-hover": activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)",
+              } as React.CSSProperties}
+            >
+              <span
+                ref={(el) => { lineNumberRefs.current[i] = el; }}
+                className={styles.particleLineNumber}
+              >
+                N<sup>o</sup>{i + 1}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className={styles.revealContainer}>
+          <div
+            ref={plusHRef}
+            className={styles.plusLine}
+            style={{
+              width: 0,
+              height: "2px",
+              backgroundColor: activeModelIndex === 0 ? "var(--color-fg)" : "var(--color-accent)",
+            }}
+          />
+          <div className={styles.revealImageStack}>
+            {IMAGE_PATHS.map((src, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                ref={(el) => { revealImgRefs.current[i] = el; }}
+                src={src}
+                alt={`Honda CB650R ${i + 1}`}
+                className={styles.revealImage}
+                style={{ opacity: 0 }}
+              />
+            ))}
           </div>
         </div>
       </div>

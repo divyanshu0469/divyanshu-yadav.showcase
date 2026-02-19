@@ -47,8 +47,10 @@
     rgba(30, 30, 30, 0.7) 50%,
     rgba(10, 10, 10, 0.8) 100%
   );
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.4);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -142,7 +144,8 @@
   }
 
   .particleTitle {
-    font-size: var(--typo-heading-large);
+    display: inline;
+    font-size: 2.5rem;
     line-height: 1.1;
     pointer-events: none;
   }
@@ -162,6 +165,113 @@
   .particleFeature {
     font-size: var(--typo-body);
   }
+}
+
+.particleLines {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.particleLine {
+  width: 2px;
+  transition: background-color 0.4s ease;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.particleLineNumber {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-anton), sans-serif;
+  font-weight: 400;
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--line-text-color);
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.particleLine:hover .particleLineNumber {
+  color: var(--line-text-hover);
+}
+
+.particleLineNumber sup {
+  font-size: 0.6em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+.particleLine:nth-child(1) {
+  height: 4rem;
+}
+
+.particleLine:nth-child(2) {
+  height: 6rem;
+}
+
+.particleLine:nth-child(3) {
+  height: 8rem;
+}
+
+@media (max-width: 768px) {
+  .particleLines {
+    gap: 0.3rem;
+  }
+
+  .particleLine:nth-child(1) {
+    height: 2.5rem;
+  }
+
+  .particleLine:nth-child(2) {
+    height: 3.5rem;
+  }
+
+  .particleLine:nth-child(3) {
+    height: 5rem;
+  }
+
+  .particleLineNumber {
+    font-size: 1.8rem;
+  }
+}
+
+.revealContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.plusLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  opacity: 0;
+}
+
+.revealImageStack {
+  display: grid;
+}
+
+.revealImage {
+  grid-row: 1;
+  grid-column: 1;
+  width: 100%;
+  height: auto;
+  opacity: 0;
 }
 
 .redLines {
