@@ -1,5 +1,5 @@
 .button {
-  z-index: 10000;
+  z-index: 20;
   background-color: transparent;
   mix-blend-mode: difference;
   position: fixed;

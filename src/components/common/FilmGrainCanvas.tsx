@@ -165,7 +165,7 @@ const FilmGrainCanvas = () => {
         left: 0,
         width: "100vw",
         height: "100vh",
-        zIndex: 9999,
+        zIndex: 30,
         pointerEvents: "none",
       }}
     />
