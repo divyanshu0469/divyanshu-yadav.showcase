@@ -38,7 +38,7 @@ const ParticleLines = forwardRef<ParticleLinesHandle, ParticleLinesProps>(
             ref={(el) => {
               lineRefs.current[i] = el;
             }}
-            className={styles.particleLine}
+            className={`${styles.particleLine}${activeLineIndex === i ? ` ${styles.particleLineActive}` : ""}`}
             onClick={() => onLineClick(i)}
             style={
               {
@@ -46,10 +46,10 @@ const ParticleLines = forwardRef<ParticleLinesHandle, ParticleLinesProps>(
                   activeModelIndex === 0
                     ? "var(--color-fg)"
                     : "var(--color-accent)",
-                borderLeft:
-                  activeLineIndex === i
-                    ? `0.25rem solid ${activeModelIndex === 0 ? "var(--color-accent)" : "var(--color-bg)"}`
-                    : "none",
+                "--line-border-color":
+                  activeModelIndex === 0
+                    ? "var(--color-accent)"
+                    : "var(--color-bg)",
                 "--line-text-color":
                   activeModelIndex === 0
                     ? "var(--color-bg)"

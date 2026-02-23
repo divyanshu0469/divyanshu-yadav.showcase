@@ -22,49 +22,19 @@ interface ParticleSceneProps {
   handleRef?: React.RefObject<ParticleSceneHandle | null>;
 }
 
-function createGrainTexture(): string {
-  const size = 128;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  const imageData = ctx.createImageData(size, size);
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const v = Math.random() * 255;
-    data[i] = v;
-    data[i + 1] = v;
-    data[i + 2] = v;
-    data[i + 3] = 18;
-  }
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.toDataURL();
-}
-
 const ParticleScene = ({
   models: modelConfigs,
   handleRef,
 }: ParticleSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const grainRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
   const toggleRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
-    const grainEl = grainRef.current;
-    if (!container || !canvas || !grainEl) return;
-
-    // Lightweight grain: generate once, animate with CSS
-    grainEl.style.backgroundImage = `url(${createGrainTexture()})`;
-
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    if (isMobile) {
-      canvas.style.display = "none";
-      return;
-    }
+    if (!container || !canvas) return;
 
     let cleanup: (() => void) | undefined;
 
@@ -196,7 +166,6 @@ const ParticleScene = ({
       style={{ backgroundColor: modelConfigs[0]?.background ?? "#000" }}
     >
       <canvas ref={canvasRef} className={styles.canvas} />
-      <div ref={grainRef} className={styles.grain} />
     </section>
   );
 };

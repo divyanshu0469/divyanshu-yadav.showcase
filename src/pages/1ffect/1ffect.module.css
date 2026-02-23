@@ -106,7 +106,6 @@
   line-height: var(--typo-display-large);
   font-family: var(--font-anton), sans-serif;
   text-transform: uppercase;
-  margin-bottom: var(--spacing-sm);
   pointer-events: auto;
   transition: color 0.3s ease;
 }
@@ -117,6 +116,7 @@
 
 .particleFeatures {
   display: none;
+  margin-top: var(--spacing-sm);
 }
 
 .particleFeature {
@@ -125,7 +125,7 @@
   font-weight: 700;
   text-transform: uppercase;
   line-height: 1.3;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.15rem;
   pointer-events: auto;
   transition: color 0.3s ease;
 }
@@ -211,6 +211,10 @@
   line-height: 0;
 }
 
+.particleLineActive {
+  border-left: 0.25rem solid var(--line-border-color);
+}
+
 .particleLine:nth-child(1) {
   height: 4rem;
 }
@@ -225,19 +229,34 @@
 
 @media (max-width: 768px) {
   .particleLines {
+    top: auto;
+    right: auto;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    align-items: flex-end;
     gap: 0.3rem;
   }
 
   .particleLine:nth-child(1) {
-    height: 2.5rem;
+    width: 2.5rem;
+    height: 2px;
   }
 
   .particleLine:nth-child(2) {
-    height: 3.5rem;
+    width: 3.5rem;
+    height: 2px;
   }
 
   .particleLine:nth-child(3) {
-    height: 5rem;
+    width: 5rem;
+    height: 2px;
+  }
+
+  .particleLineActive {
+    border-left: none;
+    border-top: 0.25rem solid var(--line-border-color);
   }
 
   .particleLineNumber {
@@ -272,6 +291,23 @@
   width: 100%;
   height: auto;
   opacity: 0;
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+@media (max-width: 768px) {
+  .grain {
+    opacity: 0.7;
+  }
 }
 
 .redLines {

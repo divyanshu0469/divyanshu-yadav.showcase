@@ -3,6 +3,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useCallback,
   ReactElement,
 } from "react";
 import { Anton, Inter } from "next/font/google";
@@ -62,13 +63,42 @@ const inter = Inter({
 });
 
 const SCROLL_STEP = 0.04;
+const SCROLL_STEP_MOBILE = 0.02;
+
+/** Clamp a value into a 0-1 progress between min and max thresholds. */
+const range01 = (value: number, min: number, max: number) =>
+  value <= min ? 0 : value >= max ? 1 : (value - min) / (max - min);
+
+/** Reset an image element to its default hidden state. */
+const resetImage = (img: HTMLElement) =>
+  gsap.set(img, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
+
+/** Get the rightmost knob x-offset for the toggle button. */
+const getKnobRightX = (sb: ScrollButtonHandle) => {
+  const btnW = sb.buttonRef!.offsetWidth;
+  const knobW = sb.knobRef!.offsetWidth;
+  const pad = parseFloat(getComputedStyle(sb.knobRef!).left);
+  return btnW - knobW - 2 * pad;
+};
+
+/** Hook that keeps a state and a ref in sync. */
+function useStateRef<T>(initial: T) {
+  const [state, setState] = useState(initial);
+  const ref = useRef(initial);
+  const set = useCallback((v: T) => {
+    ref.current = v;
+    setState(v);
+  }, []);
+  return [state, set, ref] as const;
+}
 
 const Effect1: NextPageWithLayout = () => {
   const [animationsStarted, setAnimationsStarted] = useState(false);
   const [helpMode, setHelpMode] = useState(false);
   const [particleTextVisible, setParticleTextVisible] = useState(false);
   const [activeModelIndex, setActiveModelIndex] = useState(0);
-  const [activeLineIndex, setActiveLineIndex] = useState<number | null>(null);
+  const [activeLineIndex, setActiveLineIndex, activeLineIndexRef] = useStateRef<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const cursorPosition = useRef({ x: 0, y: 0 });
   const pageRef = useRef<HTMLDivElement>(null);
@@ -88,11 +118,18 @@ const Effect1: NextPageWithLayout = () => {
   const lineTlRef = useRef<gsap.core.Timeline | null>(null);
   const linesOpenRef = useRef(false);
   const revealTlRef = useRef<gsap.core.Timeline | null>(null);
-  const activeLineIndexRef = useRef<number | null>(null);
+  const particleTextShownRef = useRef(false);
 
   useEffect(() => {
-    isMobileRef.current = window.matchMedia("(max-width: 768px)").matches;
-  }, []);
+    const mobile = window.matchMedia("(max-width: 768px)").matches;
+    isMobileRef.current = mobile;
+    setIsMobile(mobile);
+    if (mobile) {
+      setActiveLineIndex(0);
+      setActiveModelIndex(1);
+      toggleStateRef.current = 1;
+    }
+  }, [setActiveLineIndex]);
 
   useLayoutEffect(() => {
     if (particleRef.current) {
@@ -108,8 +145,41 @@ const Effect1: NextPageWithLayout = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
+  // --- Build line timeline once particle lines are available ---
+  const buildLineTimeline = useCallback(() => {
+    const pl = particleLinesRef.current;
+    if (lineTlRef.current || !pl) return;
+
+    const sizeEase = "cubic-bezier(0.85, 0, 0.15, 1)";
+    const textEase = "cubic-bezier(0.22, 1, 0.36, 1)";
+    const stagger = 0.3;
+    const isMobile = isMobileRef.current;
+    const expandedSize = isMobile ? "3.25rem" : "4.25rem";
+    const sizeProp = isMobile ? "height" : "width";
+    const lineTl = gsap.timeline({ paused: true });
+
+    pl.lineRefs.forEach((el, idx) => {
+      if (el) {
+        lineTl.to(el, { [sizeProp]: expandedSize, duration: 0.5, ease: sizeEase }, idx * stagger);
+      }
+    });
+
+    const textStart = 0.5 + 2 * stagger;
+    const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    pl.lineNumberRefs.forEach((el, idx) => {
+      if (el) {
+        const slideDistance = isMobile
+          ? parseFloat(expandedSize) * rootFontSize
+          : (pl.lineRefs[idx]?.offsetHeight ?? 0);
+        lineTl.fromTo(el, { y: slideDistance }, { y: 0, duration: 0.5, ease: textEase }, textStart + idx * stagger);
+      }
+    });
+
+    lineTlRef.current = lineTl;
+  }, []);
+
   // --- Scroll scrub orchestrator ---
-  const scrubTo = (value: number) => {
+  const scrubTo = useCallback((value: number) => {
     const hero = heroRef.current;
     const tl = tlRef.current;
     if (!hero || !tl) return;
@@ -118,26 +188,20 @@ const Effect1: NextPageWithLayout = () => {
     targetRef.current = Math.min(1, Math.max(0, value));
 
     const sb = scrollButtonRef.current;
+    const t = targetRef.current;
 
     // Hero border-radius toggle
-    if (!heroRadiusOnRef.current && targetRef.current > 0) {
+    if (!heroRadiusOnRef.current && t > 0) {
       heroRadiusOnRef.current = true;
       gsap.to(hero, { borderRadius: "1rem", duration: 0.3, ease: "power2.out" });
-    } else if (heroRadiusOnRef.current && targetRef.current === 0 && prev > 0) {
+    } else if (heroRadiusOnRef.current && t === 0 && prev > 0) {
       heroRadiusOnRef.current = false;
       gsap.to(hero, { borderRadius: "0rem", duration: 0.3, ease: "power2.in" });
     }
 
     // Chevron collapse: 10-20%
-    const chevronProgress =
-      targetRef.current <= 0.1 ? 0
-      : targetRef.current >= 0.2 ? 1
-      : (targetRef.current - 0.1) / 0.1;
-
-    const chevronOpacity =
-      targetRef.current <= 0.15 ? 1
-      : targetRef.current >= 0.2 ? 0
-      : 1 - (targetRef.current - 0.15) / 0.05;
+    const chevronProgress = range01(t, 0.1, 0.2);
+    const chevronOpacity = 1 - range01(t, 0.15, 0.2);
 
     if (sb?.arrowHeadLeftRef) {
       gsap.to(sb.arrowHeadLeftRef, {
@@ -164,15 +228,8 @@ const Effect1: NextPageWithLayout = () => {
 
     if (isMobileRef.current) {
       // Mobile: shaft fades 20-50%, button shrinks 30-60%
-      const mobileShaftFade =
-        targetRef.current <= 0.2 ? 0
-        : targetRef.current >= 0.5 ? 1
-        : (targetRef.current - 0.2) / 0.3;
-
-      const mobileShrink =
-        targetRef.current <= 0.3 ? 0
-        : targetRef.current >= 0.6 ? 1
-        : (targetRef.current - 0.3) / 0.3;
+      const mobileShaftFade = range01(t, 0.2, 0.5);
+      const mobileShrink = range01(t, 0.3, 0.6);
 
       if (sb?.arrowShaftRef) {
         gsap.to(sb.arrowShaftRef, {
@@ -192,10 +249,10 @@ const Effect1: NextPageWithLayout = () => {
       }
     } else {
       // Desktop: morph to toggle 30-50%
-      const morphProgress =
-        targetRef.current <= 0.3 ? 0
-        : targetRef.current >= 0.5 ? 1
-        : (targetRef.current - 0.3) / 0.2;
+      const morphProgress = range01(t, 0.3, 0.5);
+      const shrinkProgress = range01(t, 0.5, 0.7);
+      const shaftFadeProgress = range01(t, 0.6, 0.75);
+      const knobFadeProgress = range01(t, 0.8, 0.95);
 
       if (sb?.buttonRef) {
         gsap.to(sb.buttonRef, {
@@ -205,23 +262,6 @@ const Effect1: NextPageWithLayout = () => {
           overwrite: true,
         });
       }
-
-      // Shaft shrink 50-70%, fade 60-75%
-      const shrinkProgress =
-        targetRef.current <= 0.5 ? 0
-        : targetRef.current >= 0.7 ? 1
-        : (targetRef.current - 0.5) / 0.2;
-
-      const shaftFadeProgress =
-        targetRef.current <= 0.6 ? 0
-        : targetRef.current >= 0.75 ? 1
-        : (targetRef.current - 0.6) / 0.15;
-
-      // Knob fade 80-95%
-      const knobFadeProgress =
-        targetRef.current <= 0.8 ? 0
-        : targetRef.current >= 0.95 ? 1
-        : (targetRef.current - 0.8) / 0.15;
 
       if (sb?.arrowShaftRef) {
         gsap.to(sb.arrowShaftRef, {
@@ -238,11 +278,11 @@ const Effect1: NextPageWithLayout = () => {
       }
 
       if (sb?.knobRef && sb?.buttonRef) {
+        const rightX = getKnobRightX(sb);
         const btnW = sb.buttonRef.offsetWidth;
         const knobW = sb.knobRef.offsetWidth;
         const pad = parseFloat(getComputedStyle(sb.knobRef).left);
         const centerX = (btnW - knobW) / 2 - pad;
-        const rightX = btnW - knobW - 2 * pad;
         const targetX = toggleStateRef.current === 0 ? 0 : rightX;
 
         gsap.to(sb.knobRef, {
@@ -255,74 +295,51 @@ const Effect1: NextPageWithLayout = () => {
       }
     }
 
-    // Show particle text at 90%
-    if (!particleTextVisible && targetRef.current >= 0.9) {
+    // Show particle text at 90% (one-shot via ref — avoids stale closure)
+    if (!particleTextShownRef.current && t >= 0.9) {
+      particleTextShownRef.current = true;
       setParticleTextVisible(true);
     }
 
     // Open/close lines at 90% / 70%
-    const pl = particleLinesRef.current;
-    if (targetRef.current >= 0.9 && !linesOpenRef.current) {
+    if (t >= 0.9 && !linesOpenRef.current) {
       linesOpenRef.current = true;
-
-      if (!lineTlRef.current && pl) {
-        const widthEase = "cubic-bezier(0.85, 0, 0.15, 1)";
-        const textEase = "cubic-bezier(0.22, 1, 0.36, 1)";
-        const stagger = 0.3;
-        const expandedWidth = isMobileRef.current ? "3.25rem" : "4.25rem";
-        const lineTl = gsap.timeline({ paused: true });
-
-        pl.lineRefs.forEach((el, idx) => {
-          if (el) {
-            lineTl.to(el, { width: expandedWidth, duration: 0.5, ease: widthEase }, idx * stagger);
-          }
-        });
-
-        const textStart = 0.5 + 2 * stagger;
-        pl.lineNumberRefs.forEach((el, idx) => {
-          if (el) {
-            const parentH = pl.lineRefs[idx]?.offsetHeight ?? 0;
-            lineTl.fromTo(el, { y: parentH }, { y: 0, duration: 0.5, ease: textEase }, textStart + idx * stagger);
-          }
-        });
-
-        lineTlRef.current = lineTl;
-      }
-
+      buildLineTimeline();
       lineTlRef.current?.play();
-    } else if (targetRef.current < 0.7 && linesOpenRef.current) {
+    } else if (t < 0.7 && linesOpenRef.current) {
       linesOpenRef.current = false;
       lineTlRef.current?.reverse();
     }
 
-    // Hide/show image on scroll threshold
-    const ir = imageRevealRef.current;
+    // Hide image on scroll threshold (smooth reverse, no re-show)
     const imgHideThreshold = isMobileRef.current ? 0.9 : 0.7;
     if (
-      targetRef.current < imgHideThreshold &&
+      t < imgHideThreshold &&
       revealTlRef.current &&
       activeLineIndexRef.current !== null &&
       !revealTlRef.current.reversed()
     ) {
       revealTlRef.current.reverse();
-    } else if (
-      targetRef.current >= 0.9 &&
-      revealTlRef.current &&
-      activeLineIndexRef.current !== null &&
-      revealTlRef.current.reversed()
-    ) {
-      const imgEl = ir?.revealImgRefs[activeLineIndexRef.current];
-      if (imgEl) gsap.set(imgEl, { opacity: 1 });
-      revealTlRef.current.play();
+      revealTlRef.current.eventCallback("onReverseComplete", () => {
+        revealTlRef.current = null;
+        setActiveLineIndex(null);
+        const ir = imageRevealRef.current;
+        if (ir) {
+          ir.revealImgRefs.forEach((img) => {
+            if (img) resetImage(img);
+          });
+          if (ir.plusHRef) gsap.set(ir.plusHRef, { opacity: 0 });
+        }
+      });
     }
 
     gsap.to(tl, {
-      progress: targetRef.current,
+      progress: t,
       duration: 0.5,
       ease: "power2.out",
       overwrite: true,
     });
-  };
+  }, [buildLineTimeline]);
 
   // --- Scroll timeline setup ---
   useEffect(() => {
@@ -339,9 +356,11 @@ const Effect1: NextPageWithLayout = () => {
     tl.fromTo(particle, { borderRadius: "1rem" }, { borderRadius: "0rem", ease: "power2.out", duration: 0.3 }, 0.7);
     tlRef.current = tl;
 
+    const step = isMobileRef.current ? SCROLL_STEP_MOBILE : SCROLL_STEP;
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      scrubTo(targetRef.current + Math.sign(e.deltaY) * SCROLL_STEP);
+      scrubTo(targetRef.current + Math.sign(e.deltaY) * step);
     };
 
     let touchStartY = 0;
@@ -351,7 +370,7 @@ const Effect1: NextPageWithLayout = () => {
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
       const deltaY = touchStartY - e.touches[0].clientY;
-      scrubTo(targetRef.current + Math.sign(deltaY) * SCROLL_STEP);
+      scrubTo(targetRef.current + Math.sign(deltaY) * step);
       touchStartY = e.touches[0].clientY;
     };
 
@@ -365,10 +384,10 @@ const Effect1: NextPageWithLayout = () => {
       tl.kill();
       tlRef.current = null;
     };
-  }, [animationsStarted]);
+  }, [animationsStarted, scrubTo]);
 
   // --- Button click: toggle model or auto-scroll ---
-  const handleButtonClick = () => {
+  const handleButtonClick = useCallback(() => {
     if (targetRef.current >= 0.9) {
       if (toggleLockRef.current) return;
       toggleLockRef.current = true;
@@ -380,13 +399,8 @@ const Effect1: NextPageWithLayout = () => {
 
       const sb = scrollButtonRef.current;
       if (sb?.knobRef && sb?.buttonRef) {
-        const btnW = sb.buttonRef.offsetWidth;
-        const knobW = sb.knobRef.offsetWidth;
-        const pad = parseFloat(getComputedStyle(sb.knobRef).left);
-        const rightX = btnW - knobW - 2 * pad;
-
         gsap.to(sb.knobRef, {
-          x: next === 0 ? 0 : rightX,
+          x: next === 0 ? 0 : getKnobRightX(sb),
           duration: 0.3,
           ease: "power2.inOut",
         });
@@ -399,21 +413,20 @@ const Effect1: NextPageWithLayout = () => {
         if (targetRef.current >= 1) clearInterval(id);
       }, 35);
     }
-  };
+  }, [scrubTo]);
 
   // --- Image reveal click handler ---
-  const handleLineClick = (idx: number) => {
+  const handleLineClick = useCallback((idx: number) => {
     const ir = imageRevealRef.current;
     if (!ir?.plusHRef) return;
     const hEl = ir.plusHRef;
 
-    const prevIdx = activeLineIndex;
+    const prevIdx = activeLineIndexRef.current;
     const isTogglingOff = prevIdx === idx;
     const isCrossTransition = prevIdx !== null && !isTogglingOff;
 
     const newIdx = isTogglingOff ? null : idx;
     setActiveLineIndex(newIdx);
-    activeLineIndexRef.current = newIdx;
 
     // --- Toggle Off ---
     if (isTogglingOff) {
@@ -424,9 +437,7 @@ const Effect1: NextPageWithLayout = () => {
       ir.revealImgRefs.forEach((img, i) => {
         if (!img) return;
         gsap.killTweensOf(img);
-        if (i !== idx) {
-          gsap.set(img, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
-        }
+        if (i !== idx) resetImage(img);
       });
 
       const imgEl = ir.revealImgRefs[idx];
@@ -434,9 +445,7 @@ const Effect1: NextPageWithLayout = () => {
 
       gsap.set(imgEl, { clipPath: "none", transformOrigin: "center center" });
       const offTl = gsap.timeline({
-        onComplete: () => {
-          gsap.set(imgEl, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
-        },
+        onComplete: () => { resetImage(imgEl); },
       });
       offTl.to(imgEl, { scale: 0, duration: 0.5, ease: "power2.in" });
       return;
@@ -458,7 +467,7 @@ const Effect1: NextPageWithLayout = () => {
         } else if (i === idx) {
           gsap.set(img, { opacity: 1, scale: 0, clipPath: "none", transformOrigin: "center center", zIndex: 1 });
         } else {
-          gsap.set(img, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
+          resetImage(img);
         }
       });
 
@@ -489,7 +498,7 @@ const Effect1: NextPageWithLayout = () => {
     ir.revealImgRefs.forEach((img) => {
       if (img) {
         gsap.killTweensOf(img);
-        gsap.set(img, { opacity: 0, scale: 1, clearProps: "zIndex,clipPath,transformOrigin" });
+        resetImage(img);
       }
     });
 
@@ -523,7 +532,7 @@ const Effect1: NextPageWithLayout = () => {
     revealTl.set(hEl, { opacity: 0 });
 
     revealTlRef.current = revealTl;
-  };
+  }, [setActiveLineIndex]);
 
   return (
     <div ref={pageRef} className={styles.page}>
@@ -537,8 +546,9 @@ const Effect1: NextPageWithLayout = () => {
         </div>
       </div>
 
-      <div ref={particleRef} className={styles.particleWrapper}>
-        <ParticleScene handleRef={particleSceneRef} models={PARTICLE_MODELS} />
+      <div ref={particleRef} className={styles.particleWrapper} style={{ backgroundColor: isMobile ? "#d92330" : "#000" }}>
+        {!isMobile && <ParticleScene handleRef={particleSceneRef} models={PARTICLE_MODELS} />}
+        <div className={styles.grain} />
         <ParticleOverlay
           activeModelIndex={activeModelIndex}
           particleTextVisible={particleTextVisible}
