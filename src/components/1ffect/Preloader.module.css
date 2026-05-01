@@ -5,7 +5,7 @@
   transform: translateY(-50%);
   width: 100vw;
   height: 100vh;
-  background-color: var(--color-fg);
+  background-color: var(--effect1-color-fg);
   z-index: 50;
   display: flex;
   align-items: center;
@@ -14,7 +14,7 @@
 
 .numberWrapper {
   overflow: hidden;
-  height: var(--sizing-number-wrapper-height);
+  height: var(--effect1-sizing-number-wrapper-height);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,8 +22,8 @@
 
 .number {
   font-family: var(--font-anton), sans-serif;
-  font-size: var(--typo-display-medium);
-  color: var(--color-bg);
+  font-size: var(--effect1-typo-display-medium);
+  color: var(--effect1-color-bg);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }

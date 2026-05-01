@@ -533,7 +533,7 @@ const Effect1: NextPage = () => {
   }, [setActiveLineIndex]);
 
   return (
-    <div ref={pageRef} className={`${styles.page} ${anton.variable} ${inter.variable}`}>
+    <div ref={pageRef} className={`theme-effect1 ${styles.page} ${anton.variable} ${inter.variable}`}>
       <div className={styles.heroWrapper}>
         <div ref={heroRef} className={styles.heroSection}>
           <AnimatedRedLines
@@ -570,7 +570,7 @@ const Effect1: NextPage = () => {
           <ScrollButton ref={scrollButtonRef} onClick={handleButtonClick} />
           {!isMobileRef.current && (
             <ToolBar
-              foreground="var(--color-fg)"
+              foreground="var(--effect1-color-fg)"
               background="transparent"
               position={{ bottom: "2rem", right: "2rem" }}
               onHelpToggle={() => setHelpMode((v) => !v)}

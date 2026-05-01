@@ -42,7 +42,7 @@ const CursorFollower = ({ initialPosition }: CursorFollowerProps) => {
         left: 0,
         width: "20px",
         height: "20px",
-        backgroundColor: "var(--color-fg)",
+        backgroundColor: "var(--effect1-color-fg)",
         border: "2px solid black",
         pointerEvents: "none",
         zIndex: 40,

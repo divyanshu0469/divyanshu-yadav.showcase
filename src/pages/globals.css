@@ -1,51 +1,54 @@
 :root {
-  /* colors */
-  --color-bg: #000;
-  --color-fg: #d92330;
-  --color-accent: #f3f0f0;
-
-  /* typography (default = largest) */
-  --typo-display-large: 10rem;
-  --typo-display-medium: 8rem;
-  --typo-heading-large: 1.875rem;
-  --typo-body: 1rem;
-
-  /* spacing */
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-
-  /* sizing */
-  --sizing-number-wrapper-height: 8rem;
-
-  /* toolbar (shared component) */
+  /* shared component sizing */
   --common-toolbar-button-size: 4rem;
   --common-toolbar-icon-size: 1.5rem;
 }
 
+/* 1ffect page tokens — only active when .theme-effect1 is on a wrapper */
+.theme-effect1 {
+  /* colors */
+  --effect1-color-bg: #000;
+  --effect1-color-fg: #d92330;
+  --effect1-color-accent: #f3f0f0;
+
+  /* typography (default = largest) */
+  --effect1-typo-display-large: 10rem;
+  --effect1-typo-display-medium: 8rem;
+  --effect1-typo-heading-large: 1.875rem;
+  --effect1-typo-body: 1rem;
+
+  /* spacing */
+  --effect1-spacing-sm: 0.5rem;
+  --effect1-spacing-md: 1rem;
+
+  /* sizing */
+  --effect1-sizing-number-wrapper-height: 8rem;
+}
+
 @media (max-width: 1280px) {
-  :root {
-    --typo-display-large: 8rem;
+  .theme-effect1 {
+    --effect1-typo-display-large: 8rem;
   }
 }
 
 @media (max-width: 1024px) {
-  :root {
-    --typo-display-large: 6rem;
-    --typo-heading-large: 1.5rem;
+  .theme-effect1 {
+    --effect1-typo-display-large: 6rem;
+    --effect1-typo-heading-large: 1.5rem;
   }
 }
 
 @media (max-width: 768px) {
-  :root {
-    --typo-display-large: 4.5rem;
-    --typo-heading-large: 1.25rem;
+  .theme-effect1 {
+    --effect1-typo-display-large: 4.5rem;
+    --effect1-typo-heading-large: 1.25rem;
   }
 }
 
 @media (max-width: 640px) {
-  :root {
-    --typo-display-large: 3rem;
-    --typo-heading-large: 1.125rem;
+  .theme-effect1 {
+    --effect1-typo-display-large: 3rem;
+    --effect1-typo-heading-large: 1.125rem;
   }
 }
 
@@ -56,8 +59,6 @@ body {
 }
 
 body {
-  color: var(--color-fg);
-  background: var(--color-bg);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
