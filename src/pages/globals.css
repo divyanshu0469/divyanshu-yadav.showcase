@@ -1,39 +1,52 @@
 :root {
-  /* Legacy color variables (for backward compatibility) */
-  --background: #000;
-  --foreground: #d92330;
-  --accent: #f3f0f0;
-
-  /* Fallback values for page themes */
+  /* colors */
   --color-bg: #000;
   --color-fg: #d92330;
   --color-accent: #f3f0f0;
 
-  /* Typography fallbacks */
+  /* typography (default = largest) */
   --typo-display-large: 10rem;
   --typo-display-medium: 8rem;
   --typo-heading-large: 1.875rem;
-  --typo-heading-medium: 1.5rem;
-  --typo-body-large: 1.25rem;
-  --typo-body-base: 1rem;
-  --typo-body-small: 0.875rem;
+  --typo-body: 1rem;
 
-  /* Spacing fallbacks */
-  --spacing-xs: 0.25rem;
+  /* spacing */
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-xxl: 4rem;
 
-  /* Sizing fallbacks */
-  --sizing-container-padding: 1rem;
-  --sizing-header-gap: 0.5rem;
+  /* sizing */
   --sizing-number-wrapper-height: 8rem;
 
-  /* COMMON component tokens (fixed across all pages) */
+  /* toolbar (shared component) */
   --common-toolbar-button-size: 4rem;
   --common-toolbar-icon-size: 1.5rem;
+}
+
+@media (max-width: 1280px) {
+  :root {
+    --typo-display-large: 8rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --typo-display-large: 6rem;
+    --typo-heading-large: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --typo-display-large: 4.5rem;
+    --typo-heading-large: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --typo-display-large: 3rem;
+    --typo-heading-large: 1.125rem;
+  }
 }
 
 html,
@@ -43,8 +56,8 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--color-fg);
+  background: var(--color-bg);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
