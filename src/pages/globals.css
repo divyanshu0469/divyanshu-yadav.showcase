@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   /* shared component sizing */
   --common-toolbar-button-size: 4rem;
