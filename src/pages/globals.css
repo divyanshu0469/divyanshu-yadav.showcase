@@ -1,39 +1,55 @@
 :root {
-  /* Legacy color variables (for backward compatibility) */
-  --background: #000;
-  --foreground: #d92330;
-  --accent: #f3f0f0;
-
-  /* Fallback values for page themes */
-  --color-bg: #000;
-  --color-fg: #d92330;
-  --color-accent: #f3f0f0;
-
-  /* Typography fallbacks */
-  --typo-display-large: 10rem;
-  --typo-display-medium: 8rem;
-  --typo-heading-large: 1.875rem;
-  --typo-heading-medium: 1.5rem;
-  --typo-body-large: 1.25rem;
-  --typo-body-base: 1rem;
-  --typo-body-small: 0.875rem;
-
-  /* Spacing fallbacks */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-xxl: 4rem;
-
-  /* Sizing fallbacks */
-  --sizing-container-padding: 1rem;
-  --sizing-header-gap: 0.5rem;
-  --sizing-number-wrapper-height: 8rem;
-
-  /* COMMON component tokens (fixed across all pages) */
+  /* shared component sizing */
   --common-toolbar-button-size: 4rem;
   --common-toolbar-icon-size: 1.5rem;
+}
+
+/* 1ffect page tokens — only active when .theme-effect1 is on a wrapper */
+.theme-effect1 {
+  /* colors */
+  --effect1-color-bg: #000;
+  --effect1-color-fg: #d92330;
+  --effect1-color-accent: #f3f0f0;
+
+  /* typography (default = largest) */
+  --effect1-typo-display-large: 10rem;
+  --effect1-typo-display-medium: 8rem;
+  --effect1-typo-heading-large: 1.875rem;
+  --effect1-typo-body: 1rem;
+
+  /* spacing */
+  --effect1-spacing-sm: 0.5rem;
+  --effect1-spacing-md: 1rem;
+
+  /* sizing */
+  --effect1-sizing-number-wrapper-height: 8rem;
+}
+
+@media (max-width: 1280px) {
+  .theme-effect1 {
+    --effect1-typo-display-large: 8rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .theme-effect1 {
+    --effect1-typo-display-large: 6rem;
+    --effect1-typo-heading-large: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .theme-effect1 {
+    --effect1-typo-display-large: 4.5rem;
+    --effect1-typo-heading-large: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .theme-effect1 {
+    --effect1-typo-display-large: 3rem;
+    --effect1-typo-heading-large: 1.125rem;
+  }
 }
 
 html,
@@ -43,8 +59,6 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

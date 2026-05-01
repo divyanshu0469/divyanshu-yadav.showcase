@@ -4,7 +4,6 @@ import {
   useLayoutEffect,
   useRef,
   useCallback,
-  ReactElement,
 } from "react";
 import { Anton, Inter } from "next/font/google";
 import dynamic from "next/dynamic";
@@ -19,8 +18,7 @@ import ImageReveal from "@/components/1ffect/ImageReveal";
 import ScrollButton from "@/components/1ffect/ScrollButton";
 import styles from "./1ffect.module.css";
 import ToolBar from "@/components/common/ToolBar";
-import { ThemeLayout } from "@/components/layouts";
-import type { NextPageWithLayout } from "@/pages/_app";
+import type { NextPage } from "next";
 import type { ParticleSceneHandle } from "@/components/1ffect/ParticleScene/ParticleScene";
 import type { ParticleLinesHandle } from "@/components/1ffect/ParticleLines";
 import type { ImageRevealHandle } from "@/components/1ffect/ImageReveal";
@@ -92,7 +90,7 @@ function useStateRef<T>(initial: T) {
   return [state, set, ref] as const;
 }
 
-const Effect1: NextPageWithLayout = () => {
+const Effect1: NextPage = () => {
   const [animationsStarted, setAnimationsStarted] = useState(false);
   const [helpMode, setHelpMode] = useState(false);
   const [particleTextVisible, setParticleTextVisible] = useState(false);
@@ -535,7 +533,7 @@ const Effect1: NextPageWithLayout = () => {
   }, [setActiveLineIndex]);
 
   return (
-    <div ref={pageRef} className={styles.page}>
+    <div ref={pageRef} className={`theme-effect1 ${styles.page} ${anton.variable} ${inter.variable}`}>
       <div className={styles.heroWrapper}>
         <div ref={heroRef} className={styles.heroSection}>
           <AnimatedRedLines
@@ -572,7 +570,7 @@ const Effect1: NextPageWithLayout = () => {
           <ScrollButton ref={scrollButtonRef} onClick={handleButtonClick} />
           {!isMobileRef.current && (
             <ToolBar
-              foreground="var(--color-fg)"
+              foreground="var(--effect1-color-fg)"
               background="transparent"
               position={{ bottom: "2rem", right: "2rem" }}
               onHelpToggle={() => setHelpMode((v) => !v)}
@@ -584,17 +582,6 @@ const Effect1: NextPageWithLayout = () => {
         </>
       )}
     </div>
-  );
-};
-
-Effect1.getLayout = (page: ReactElement) => {
-  return (
-    <ThemeLayout
-      theme="1ffect"
-      fontVariables={`${anton.variable} ${inter.variable}`}
-    >
-      {page}
-    </ThemeLayout>
   );
 };
 

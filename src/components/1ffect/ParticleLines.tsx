@@ -44,20 +44,20 @@ const ParticleLines = forwardRef<ParticleLinesHandle, ParticleLinesProps>(
               {
                 backgroundColor:
                   activeModelIndex === 0
-                    ? "var(--color-fg)"
-                    : "var(--color-accent)",
+                    ? "var(--effect1-color-fg)"
+                    : "var(--effect1-color-accent)",
                 "--line-border-color":
                   activeModelIndex === 0
-                    ? "var(--color-accent)"
-                    : "var(--color-bg)",
+                    ? "var(--effect1-color-accent)"
+                    : "var(--effect1-color-bg)",
                 "--line-text-color":
                   activeModelIndex === 0
-                    ? "var(--color-bg)"
-                    : "var(--color-fg)",
+                    ? "var(--effect1-color-bg)"
+                    : "var(--effect1-color-fg)",
                 "--line-text-hover":
                   activeModelIndex === 0
-                    ? "var(--color-accent)"
-                    : "var(--color-bg)",
+                    ? "var(--effect1-color-accent)"
+                    : "var(--effect1-color-bg)",
               } as React.CSSProperties
             }
           >

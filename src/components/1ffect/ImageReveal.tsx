@@ -44,8 +44,8 @@ const ImageReveal = forwardRef<ImageRevealHandle, ImageRevealProps>(
             height: "2px",
             backgroundColor:
               activeModelIndex === 0
-                ? "var(--color-fg)"
-                : "var(--color-accent)",
+                ? "var(--effect1-color-fg)"
+                : "var(--effect1-color-accent)",
           }}
         />
         <div className={styles.revealImageStack}>

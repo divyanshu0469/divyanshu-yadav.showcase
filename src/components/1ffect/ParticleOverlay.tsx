@@ -27,12 +27,12 @@ const ParticleOverlay = ({
         {
           "--text-color":
             activeModelIndex === 0
-              ? "var(--color-fg)"
-              : "var(--color-accent)",
+              ? "var(--effect1-color-fg)"
+              : "var(--effect1-color-accent)",
           "--text-hover-color":
             activeModelIndex === 0
-              ? "var(--color-accent)"
-              : "var(--color-bg)",
+              ? "var(--effect1-color-accent)"
+              : "var(--effect1-color-bg)",
         } as React.CSSProperties
       }
     >

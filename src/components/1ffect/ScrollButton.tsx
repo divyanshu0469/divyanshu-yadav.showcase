@@ -59,7 +59,7 @@ const ScrollButton = forwardRef<ScrollButtonHandle, ScrollButtonProps>(
             x2="128"
             y2="216"
             fill="none"
-            stroke="var(--color-accent)"
+            stroke="var(--effect1-color-accent)"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="8"
@@ -71,7 +71,7 @@ const ScrollButton = forwardRef<ScrollButtonHandle, ScrollButtonProps>(
             x2="56"
             y2="144"
             fill="none"
-            stroke="var(--color-accent)"
+            stroke="var(--effect1-color-accent)"
             strokeLinecap="round"
             strokeWidth="8"
           />
@@ -82,7 +82,7 @@ const ScrollButton = forwardRef<ScrollButtonHandle, ScrollButtonProps>(
             x2="200"
             y2="144"
             fill="none"
-            stroke="var(--color-accent)"
+            stroke="var(--effect1-color-accent)"
             strokeLinecap="round"
             strokeWidth="8"
           />

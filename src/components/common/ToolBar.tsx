@@ -30,8 +30,8 @@ type ToolBarProps = {
 const ToolBar = ({
   position,
   strokeWidth = 2,
-  foreground = "var(--foreground)",
-  background = "var(--background)",
+  foreground = "var(--effect1-color-fg)",
+  background = "var(--effect1-color-bg)",
   onHelpToggle,
 }: ToolBarProps) => {
   const router = useRouter();
@@ -215,8 +215,8 @@ const ToolBar = ({
           height: "fit-content",
           position: "absolute",
           borderRadius: "2px",
-          color: "var(--accent)",
-          backgroundColor: "var(--foreground)",
+          color: "var(--effect1-color-accent)",
+          backgroundColor: "var(--effect1-color-fg)",
           transformOrigin: "bottom",
         }}
         className={styles.box}
@@ -282,7 +282,7 @@ const ToolBar = ({
           zIndex: 0,
           position: "absolute",
           borderRadius: "2px",
-          backgroundColor: "var(--accent)",
+          backgroundColor: "var(--effect1-color-accent)",
           transformOrigin: "bottom",
         }}
         className={styles.box}
