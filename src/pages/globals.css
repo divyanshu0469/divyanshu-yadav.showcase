@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  /* home page colors */
+  --color-home-white: #fffff6;
+  --color-home-blue: #223f79;
+  --color-home-sand: #dcdbd5;
+
+  /* fonts — next/font wrappers override these with optimized values in scope */
+  --font-oswald: "Oswald", sans-serif;
+  --font-home-quintessential: "Quintessential", serif;
+}
+
 :root {
   /* shared component sizing */
   --common-toolbar-button-size: 4rem;
@@ -66,10 +77,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@layer base {
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
 }
 
 a {
